@@ -78,5 +78,9 @@ button is `blue-600`. Stage 1 records every mismatch between generated tokens an
 ## A-009
 
 **Status:** accepted.
-The challenge's 72-hour window starts at the first commit, `8888643` at 2026-10-23T23:27:55-06:00
-(owner, 2026-10-24). Submission deadline: **2026-10-26 23:27 (UTC-6)**.
+Amended 2026-10-24 by the owner, replacing the earlier "72 hours from the first commit".
+
+- **72-hour window:** the challenge was received on 2026-10-22 at 09:19. The timezone is assumed to be the
+  owner's, UTC-6. Submission deadline: **2026-10-25 09:19 (UTC-6)**.
+- **6-hour work budget:** counted from the first commit, `8888643` at 2026-10-23 23:27:55 (UTC-6).
+  Elapsed time is measured from that commit; interpretation of pauses is in [PLAN.md](PLAN.md#time-budget).

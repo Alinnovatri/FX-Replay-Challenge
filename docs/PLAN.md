@@ -1,7 +1,8 @@
 # Plan
 
 The source of truth is [brief.md](brief.md); this plan replaces its roadmap (section 5) for order and
-timing. One branch and one PR per stage, always into `main`. Deadline: 2026-10-26 23:27 (UTC-6), see
+timing. One branch and one PR per stage, always into `main`. Submission deadline: 2026-10-25 09:19
+(UTC-6); the 6-hour budget counts from the first commit (2026-10-23 23:27:55). See
 [A-009](ASSUMPTIONS.md#a-009).
 
 ## Brief check against the challenge PDF
@@ -53,7 +54,10 @@ documents link to that definition instead of restating it.
 
 ## Time budget
 
-Total 360 min. A stage that runs 50% over its budget stops and proposes cuts.
+Total 360 min, counted as wall-clock time from the first commit (owner, 2026-10-24); time before Stage 0
+(writing the brief) is included. Open assumption, pending the owner: pauses between work sessions are logged
+in `docs/ai-log.md` and not counted.
+A stage that runs 50% over its budget stops and proposes cuts.
 
 | Stage | Budget | Acceptance criteria |
 | --- | --- | --- |

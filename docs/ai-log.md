@@ -39,3 +39,7 @@ fxreplay.com, writing the token generator, contrast report and planning docs.
 **Time (measured):** at most 24 min, against a 25 min budget. Lower bound of the start: the brief commit
 `5e7556e` at 00:13:23 (UTC-6), which the kickoff prompt depends on. End: PR #1 created at 00:37:27. The
 window includes the owner's reply time, so working time is lower.
+
+**Budget used (measured):** the owner set the 6-hour budget to count from the first commit, `8888643` at
+23:27:55. By the end of Stage 0 (PR #1 at 00:37:27), 69.5 min of the 360 min were used: about 45 min of
+preparation before the kickoff and at most 24 min of Stage 0.
