@@ -1,12 +1,13 @@
 # FX Replay Challenge
 
 A "Try FX Replay Free" landing page, a signup flow and a Users API, built to raise the conversion rate from
-marketing traffic to account creation. Conversion is counted only when the server confirms the account.
+marketing traffic to account creation. The conversion metric is defined in
+[ANALYTICS.md](docs/ANALYTICS.md#primary-metric).
 
 - Production: <https://fx-replay-challenge.vercel.app> (smoke: `BASE_URL=https://fx-replay-challenge.vercel.app pnpm smoke`).
 - Deliverables: [Architecture](docs/ARCHITECTURE.md), [Analytics plan](docs/ANALYTICS.md),
   [Experiment](docs/EXPERIMENT.md), [AI-native workflow](docs/AI_WORKFLOW.md),
-  [Performance review](docs/PERFORMANCE.md), [Security](docs/SECURITY.md).
+  [Performance review](docs/PERFORMANCE.md), [Security](docs/SECURITY.md), [Demo script](docs/DEMO.md).
 - Working notes: [brief](docs/brief.md), [plan](docs/PLAN.md), [decisions](docs/DECISIONS.md),
   [assumptions](docs/ASSUMPTIONS.md), [AI log](docs/ai-log.md).
 
@@ -25,14 +26,16 @@ Postgres. Production uses Neon Postgres on Vercel.
 ```bash
 git clone https://github.com/Alinnovatri/FX-Replay-Challenge.git fx-replay-challenge
 cd fx-replay-challenge
-nvm use
+nvm install
 corepack enable
 pnpm install --frozen-lockfile
 pnpm dev
 ```
 
 `pnpm dev` applies migrations to a local PGlite database in `.pglite/` and starts Next.js on
-<http://localhost:3000>. Health check: <http://localhost:3000/api/health>.
+<http://localhost:3000>, with local-only placeholder secrets and analytics kept in the log
+(`ANALYTICS_SINK=log`); export your own `ADMIN_TOKEN` or `SESSION_SECRET` to override them. Production requires
+the real values and fails loudly without them. Health check: <http://localhost:3000/api/health>.
 
 ## Checks
 
@@ -58,7 +61,7 @@ Contract: [src/contracts/users.ts](src/contracts/users.ts); decisions and error 
 
 | Method and path | Auth | Success | Errors |
 | --- | --- | --- | --- |
-| `POST /users` with `{ "email" }` | None; optional `Idempotency-Key` (UUID) | `201 { user }` and the `__Host-fxr_profile` cookie | 400, 409 `EMAIL_TAKEN`, 409 `IDEMPOTENCY_CONFLICT`, 500 |
+| `POST /users` with `{ "email" }`, optionally `firstName`, `experienceLevel`, `markets` | None; optional `Idempotency-Key` (UUID) | `201 { user }` and the `__Host-fxr_profile` cookie | 400, 409 `EMAIL_TAKEN`, 409 `IDEMPOTENCY_CONFLICT`, 500 |
 | `PATCH /users/:id` with profile fields | Self-service cookie (same id, no email) or `Authorization: Bearer <ADMIN_TOKEN>` | `200 { user }` | 400, 401, 403, 404, 409, 500 |
 | `GET /users?limit=&cursor=` | `Authorization: Bearer <ADMIN_TOKEN>` | `200 { users, nextCursor }` | 400, 401, 500 |
 
@@ -89,3 +92,22 @@ integration from the Vercel Marketplace provides `DATABASE_URL`; no secret lives
 | `brand/` | Delivered brand kit and generated tokens |
 | `scripts/` | Token generator, contrast report, config validator, migrate, build and smoke scripts |
 | `.claude/`, `CLAUDE.md`, `.mcp.json` | The Claude Code system: agents, skills, hooks, MCP policy |
+
+## Not prioritized
+
+Left out on purpose to keep the solution small; each item has its reason and next step. Accepted risks are in
+[SECURITY.md](docs/SECURITY.md#accepted-risks) and [PERFORMANCE.md](docs/PERFORMANCE.md).
+
+| Item | Why it was not done | Next step |
+| --- | --- | --- |
+| Rate limiting and bot protection on `/users` and `/api/e` | An in-memory limiter does not hold across serverless instances; a shared store is a paid service that needs approval | Upstash Redis (or Vercel Firewall rules) with a 429 in the uniform error shape |
+| Accounts in the real FX Replay app | Our users don't exist there (ASSUMPTIONS A-004) | Hand off to FX Replay's signup or identity system; keep `user_signed_up` server-side |
+| Email verification and sign-in | Not required by the brief; no password by owner decision | Magic link after signup |
+| An experiment result | 8,155 visitors per arm are needed ([EXPERIMENT.md](docs/EXPERIMENT.md)); the design is the deliverable | Run with real traffic; decide with the documented rules |
+| Excluding the owner's own browsing | Only requests with `x-fxr-test: 1` are tagged; untagged manual visits count as real traffic | Filter internal IPs in PostHog, or tag with a header extension |
+| E2E and Lighthouse against production | Covered locally and in CI on the same build; production has a read-only smoke | A scheduled read-only run against the live URL |
+| LCP outliers (about 2.7 s in some lab runs) | Seen in 2 of 9 runs; the cause is inferred, not proven | Field data (Web Vitals to PostHog) before more lab tuning |
+| Localisation and consent by region | Languages and regions are not sourced (TODO(owner) in ARCHITECTURE) | Per-locale content files and `hreflang` once confirmed |
+| Dependabot updates | The open PRs were closed after their previews failed, most likely on Neon's free branch limit (inferred); `dependabot/**` previews are now off | Triage weekly; React and react-dom together |
+| Brand source files and `blue-950` | Not delivered ([QUESTIONS.md](docs/QUESTIONS.md) Q1, Q2) | Replace the generated tokens in one PR when they arrive |
+| Test users in production | Kept as evidence of the checks, all `smoke+…@example.test` | The owner can delete them in Neon; nothing reads them |

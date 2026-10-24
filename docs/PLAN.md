@@ -60,7 +60,7 @@ ADR-008), no experiment feature flag, less visual polish. A stage that runs 50% 
 | 4. Signup flow | 35 min | Email-only signup wired to POST; optional profile step via PATCH; all states; shared validation; double-submit guard; timeout and retry; accessible errors and focus; E2E on mobile and desktop with 0 axe violations |
 | 5. Landing and brand | 55 min | StoryBrand copy from verified facts only; CSS-only motion off the LCP element; reduced motion honoured; 360 to 1440 px; metadata, OG, canonical, JSON-LD, sitemap, robots; Lighthouse gates pass |
 | 6. Analytics and experiment | 25 min | Typed tracker and relay; events verified in PostHog; test traffic tagged and excluded; ANALYTICS.md and EXPERIMENT.md with sample size and ship, continue and reject rules |
-| 7. Hardening | 15 min | All agents run; rate limiting; security headers and CSP; smoke, E2E and Lighthouse against production |
+| 7. Hardening | 15 min | Cut by the owner after the budget overrun: security headers and CSP moved into Stage 9; rate limiting and runs against production are in the README under "Not prioritized" |
 | 8. Documentation | 20 min | ARCHITECTURE (Mermaid), SECURITY, PERFORMANCE with measured numbers only, AI_WORKFLOW; every claim re-checked against the code |
 | 9. Final audit | 10 min | `/pre-submit-audit`; clean-clone test; full-history secrets scan; DEMO.md with a new-requirement playbook |
 

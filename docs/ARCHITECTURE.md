@@ -55,7 +55,7 @@ flowchart TB
 - **Postgres everywhere** (PGlite in tests, Neon in production): tests exercise the real constraints (unique
   email, SQLSTATE 23505). Trade-off: Neon's HTTP driver has no interactive transactions, so idempotency uses two
   statements with documented gaps (ADR-004).
-- **No password at signup** (owner decision 9): one field, minimum friction. Account access is out of scope; a
+- **No password at signup** (owner decision 9): one required field (email, plus an optional first name), minimum friction. Account access is out of scope; a
   signed 30-minute HttpOnly cookie lets the new user complete the optional profile.
 - **Server-side conversion and a first-party relay** (ADR-003): zero third-party JavaScript and a conversion
   that can't be blocked or faked by the browser, at the cost of PostHog's autocapture and session replay.

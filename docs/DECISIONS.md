@@ -90,8 +90,8 @@ returns `{ status, db }` with 200, or 503 when the database is unreachable (adde
   profile cookies; expired keys are pruned. Neon's HTTP driver has no interactive transactions, so the user
   insert and the key insert are two statements, with two accepted gaps: if storing the key fails, the request
   still returns 201 and logs `idempotency_store_failed` (a later retry gets 409 `EMAIL_TAKEN`); and when two
-  retries with the same key race, the loser replays the winner's response only if the winner has already
-  stored it, otherwise it gets 409 `EMAIL_TAKEN`. PGlite serialises queries, so the race is not reproduced in
+  retries with the same key race, the loser polls for the winner's stored response for about 600 ms (three
+  tries, 200 ms apart) and replays it; if the winner still hasn't stored it, the loser gets 409 `EMAIL_TAKEN`. PGlite serialises queries, so the race is not reproduced in
   tests. Reserving the key before the insert is the next step.
 - Bodies are read with a 10,000-byte cap (declared `Content-Length` or streamed); larger bodies are a 400.
 - A cookie holder sending `email` gets 403 whatever its value; the check runs before validation.
@@ -102,7 +102,8 @@ returns `{ status, db }` with 200, or 503 when the database is unreachable (adde
   opaque `nextCursor`.
 
 **Risk:** a 409 on duplicate email tells a caller that an address is registered (account enumeration).
-The brief requires the 409; rate limiting in Stage 7 limits probing, and the risk is documented in SECURITY.
+The brief requires the 409. Rate limiting would limit probing but was not prioritized; the risk is accepted in
+SECURITY and listed in the README under "Not prioritized".
 
 ## ADR-005: Brand tokens and contrast-driven deviations
 
@@ -214,7 +215,7 @@ symlink to `docs/PRODUCT_CONTEXT.md`, so there is one context document.
 
 **Status:** accepted (2026-10-24, Stage 4).
 
-- One field, the email, then an optional profile step, matching FX Replay's own email-only signup and owner
+- One required field, the email (plus an optional first name since ADR-013), then an optional profile step, matching FX Replay's own email-only signup and owner
   decision 9 (no password). The `signup` skill audit drove the details: a visible label (no placeholder-only
   label), `type=email`, `autocomplete=email` and `inputmode=email`, "Free plan. No credit card required."
   next to the button (A-003), the form keeps its value on error, and "Skip for now" on the profile step.
@@ -223,11 +224,11 @@ symlink to `docs/PRODUCT_CONTEXT.md`, so there is one context document.
 - Double-submit guard: a `useRef` flag ignores submits while a request is in flight. The button uses
   `aria-disabled` and `aria-busy` rather than `disabled`, so it keeps focus and is announced as busy.
 - Timeout: 10 s through `setTimeout` and `AbortController` (testable with Playwright's clock). Each signup
-  attempt has one `Idempotency-Key`, reused by "Try again" and replaced only when the email changes, so a
-  retry after a timeout can't create a second account.
+  attempt has one `Idempotency-Key`, reused by "Try again" and replaced when the email, the name or the quiz answers
+  change, or after a 409 `IDEMPOTENCY_CONFLICT`, so a retry after a timeout can't create a second account.
 - Focus: to the field on field errors, to the form error on server or network errors, and to the success
-  heading on success. Messages use a `role="alert"` field error and an `aria-live` form error, with an icon and
-  text, never color alone.
+  heading on success. Messages use a `role="alert"` field error and a form error that is focused when it appears
+  (which announces it, so it has no live region), with an icon and text, never color alone.
 - The conversion stays server-side (`user_signed_up` in `POST /users`); the browser sends no analytics yet
   (Stage 6).
 - E2E runs against the production build with a freshly migrated PGlite folder and fake test secrets.
@@ -275,7 +276,7 @@ data, so it is tested, not assumed:
   half-faded section failed axe color contrast), a slow hero glow, button and card micro-interactions, the
   progress bar and step transitions. `prefers-reduced-motion` turns all of it off.
 - SEO: `metadataBase`, canonical, Open Graph and Twitter cards, a `SoftwareApplication` JSON-LD with the free
-  offer, `robots.txt` (disallows `/users` and `/api/`) and `sitemap.xml`. Lighthouse audits both pages.
+  offer, `robots.txt` (disallows `/users` and `/api/`) and `sitemap.xml`. Lighthouse audits three URLs (`/` and both fixed QA URLs).
 
 ## ADR-013: Landing redesign, name at signup and the control QA URL
 
@@ -294,3 +295,18 @@ data, so it is tested, not assumed:
 - **Layout:** trust strip, a showcase window, a bento grid of five features, "How replay works in FX Replay",
   audience questions, FAQ and final CTA, built with the existing tokens; no new dependencies (inline Lucide
   icons, ISC). Tabs were rejected: they hide content from scanners and add client JavaScript.
+
+## ADR-014: Security headers and a static-friendly CSP
+
+**Status:** accepted (2026-10-24, Stage 9; owner: "añade solo las cabeceras de seguridad si da tiempo").
+
+- `next.config.ts` sends a CSP, `X-Content-Type-Options`, `Referrer-Policy: strict-origin-when-cross-origin`,
+  `X-Frame-Options: DENY`, `Permissions-Policy` and `Cross-Origin-Opener-Policy` on every path; HSTS stays with
+  Vercel. Values follow `security-reviewer`.
+- `script-src` keeps `'unsafe-inline'`: App Router inlines its bootstrap scripts, and removing it needs a
+  per-request nonce, which makes every page dynamic, ends CDN caching of `/` and costs TTFB. Everything else is
+  `'self'` (the analytics relay is same-origin; PostHog is called from the server), so third-party scripts,
+  framing and plugins are still blocked. Dev mode adds `'unsafe-eval'`.
+- Previews keep the same policy, so the Vercel toolbar may not load there; production never allows `vercel.live`.
+- E2E asserts the headers and that the page runs with no CSP violation.
+- Rate limiting was not prioritized (README, "Not prioritized").

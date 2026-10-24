@@ -3,28 +3,31 @@
 Measured numbers only. Lab data comes from Lighthouse CI (`pnpm lhci`: mobile form factor, devtools throttling,
 median of 3 runs, three pages), re-run after every change to the page shell; field data does not exist yet.
 
-## Core Web Vitals (lab, latest run in the redesign, 2026-10-24 06:31)
+## Core Web Vitals (lab, latest run in Stage 9, 2026-10-24 07:21)
 
 | Metric | Budget | `/` | `/variants/quiz` | `/variants/control` |
 | --- | --- | --- | --- | --- |
-| Performance score | ≥ 0.90 | 0.99 | 1.00 | 1.00 |
+| Performance score | ≥ 0.90 | 0.99 | 0.99 | 0.99 |
 | Accessibility score | ≥ 0.95 | 1.00 | 1.00 | 1.00 |
 | SEO score | ≥ 0.90 | 1.00 | 1.00 | 1.00 |
-| Largest Contentful Paint | ≤ 2,500 ms | 1,548 ms | 1,537 ms | 1,540 ms |
+| Largest Contentful Paint | ≤ 2,500 ms | 1,568 ms | 1,575 ms | 1,564 ms |
 | Cumulative Layout Shift | ≤ 0.10 | 0 | 0 | 0 |
-| Total Blocking Time | ≤ 200 ms | 15 ms | 17 ms | 18 ms |
-| HTML (transfer) | ≤ 14,000 B | 11,308 B | 11,521 B | 11,390 B |
-| Scripts (transfer) | ≤ 200,000 B | 163,714 B | 165,999 B | 163,714 B |
+| Total Blocking Time | ≤ 200 ms | 16 ms | 18 ms | 19 ms |
+| HTML (transfer) | ≤ 14,000 B | 11,901 B | 12,112 B | 11,981 B |
+| Scripts (transfer) | ≤ 200,000 B | 169,386 B | 172,282 B | 169,386 B |
 | Third-party bytes | none | 0 | 0 | 0 |
 
-**Open risk, LCP outliers:** 2 of these 9 runs measured about 2,690 ms (one on `/`, one on `/variants/control`;
+All 9 runs of this one measured 1,555 to 1,578 ms. Scripts grew about 5.7 KB from the redesign run because the
+page-view tracker now checks the referrer with the shared `zod/mini` contract before sending (Stage 9).
+
+**Open risk, LCP outliers:** in the redesign run (06:31), 2 of 9 runs measured about 2,690 ms (one on `/`, one on `/variants/control`;
 FCP equal to LCP, so the whole first paint was late). The run before this one failed the LCP gate on `/` with
 3 slow runs in a row, while another `next dev` server was running on the same machine; it was not re-measured
 in isolation, so the cause is inferred, not proven. The redesign raised HTML from about 7.2 KB to 11.3 KB.
 
-Production, measured with `curl` from the developer machine in Stage 8, before the redesign (one sample, not a
-benchmark): `/` returned
-6,383 B compressed with a time to first byte of 0.25 s; static assets are served from the Vercel CDN (`x-vercel-cache: HIT`).
+Production, measured with `curl` from the developer machine (one sample each, not a benchmark): after the
+redesign (2026-10-24 06:56) `/` returned 10,938 B compressed with a time to first byte of 0.26 s; in Stage 8,
+before it, 6,383 B and 0.25 s. Static assets are served from the Vercel CDN (`x-vercel-cache: HIT`).
 
 How the numbers moved: Stage 2 skeleton LCP 1,656 ms; Stage 4 signup 1,465 ms; Stage 5 landing 1,540 ms;
 Stage 6 analytics 1,560 ms; redesign 1,537 to 1,548 ms. INP is not measured in the lab; TBT was at most 21 ms in every logged run.
@@ -33,9 +36,10 @@ Stage 6 analytics 1,560 ms; redesign 1,537 to 1,548 ms. INP is not measured in t
 
 - **Rendering:** both arms are statically prerendered; the only dynamic routes are the API and the relay.
   The experiment is assigned in `proxy.ts` and served by a rewrite, so there is no client-side flash or swap.
-- **LCP element:** the `h1` (text), in all 6 runs of the Stage 5 audit and all 6 runs of the latest Stage 6 run. It is never animated and uses Lato with
+- **LCP element:** the `h1` (text), in every run checked (Stage 5, Stage 6 and the redesign); see the open risk
+  above for today's outliers. It is never animated and uses Lato with
   `display: 'optional'`: with `swap`, a late font load re-painted it and produced a bimodal LCP (1,415 or
-  2,665 ms) that failed the gate in the clean-clone test; with `optional`, 9 of 9 runs measured about 1,414 ms.
+  2,665 ms) that failed the gate in the clean-clone test; with `optional`, 9 of 9 runs measured about 1,414 ms at the time (Stage 5).
 - **Fonts:** self-hosted from pinned `@fontsource` files through `next/font/local` (the first production build
   failed while fetching from Google Fonts).
 - **JavaScript:** React plus the two signup components; analytics is a 1 KB `fetch` helper. No third-party

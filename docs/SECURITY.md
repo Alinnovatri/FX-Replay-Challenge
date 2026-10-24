@@ -37,15 +37,24 @@ measurement; nothing is aspirational unless it is under "Not done".
 
 - **Account enumeration:** a duplicate email returns 409 `EMAIL_TAKEN`, as the brief requires. Mitigation would
   be rate limiting (not done).
+- **Scripted signups:** without a limiter or bot check, a script can create accounts that count as
+  `user_signed_up`; the funnel should be watched for bursts until rate limiting exists.
+- **Global idempotency keys:** a caller holding another client's random key and its exact body, within 30
+  minutes, gets the stored response and a profile cookie for that user. The key is a client-generated UUID that
+  never leaves the browser, so the risk is low; binding the key to the visitor id is the next step.
 - **Event spoofing:** the relay accepts any well-formed event with a UUID-shaped visitor id, so a script could
   inflate the funnel denominator and use PostHog quota. Same-origin checks stop browsers, not scripts.
 - **Dev-only advisories** in Lighthouse CI and markdownlint dependencies (ADR-009); nothing ships to production.
 
+## Headers
+
+CSP, `X-Content-Type-Options`, `Referrer-Policy`, `X-Frame-Options`, `Permissions-Policy` and
+`Cross-Origin-Opener-Policy` on every path since Stage 9 (ADR-014); HSTS from Vercel. `script-src` keeps
+`'unsafe-inline'` so pages stay static (no nonce).
+
 ## Not done (next steps)
 
 - Rate limiting per IP and visitor on `POST /users` and `POST /api/e`.
-- Security headers beyond Vercel's defaults: Content-Security-Policy, `X-Content-Type-Options`,
-  `Referrer-Policy`, `Permissions-Policy`, `frame-ancestors` (measured: none set today).
 - HMAC-signed visitor ids so forged ids are rejected.
 - Bot protection on signup; email verification.
 - A scoped PostHog personal key for the MCP (today it authenticates as a project admin and every call asks).
