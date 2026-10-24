@@ -51,3 +51,13 @@ test('reduced motion stops the hero entrance animation', async ({ page }) => {
     .evaluate((el) => getComputedStyle(el).animationDuration);
   expect(parseFloat(duration)).toBeLessThan(0.001);
 });
+
+test('reduced motion also stops the scroll-driven section animation', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.goto('/');
+  const name = await page
+    .locator('.on-scroll')
+    .first()
+    .evaluate((el) => getComputedStyle(el).animationName);
+  expect(name).toBe('none');
+});

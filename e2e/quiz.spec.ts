@@ -30,6 +30,7 @@ test('quiz-first: answers first, email last, with progress, back navigation and 
   await page.getByRole('button', { name: 'Back' }).click();
   await expect(page.getByRole('radio', { name: /Intermediate/ })).toBeChecked();
   await page.getByRole('button', { name: 'Continue' }).click();
+  await expect(page.getByRole('checkbox', { name: 'Futures' })).toBeChecked();
   await page.getByRole('checkbox', { name: 'Metals' }).check();
   await page.getByRole('button', { name: 'Continue' }).click();
 
@@ -40,7 +41,8 @@ test('quiz-first: answers first, email last, with progress, back navigation and 
   await page.getByRole('button', { name: 'Try FX Replay Free' }).click();
 
   await expect(page.getByRole('heading', { name: 'Your free account is ready' })).toBeFocused();
-  expect(bodies[0]).toMatchObject({ experienceLevel: 'intermediate', markets: ['metals'] });
+  expect(bodies[0]).toMatchObject({ experienceLevel: 'intermediate', markets: ['futures', 'metals'] });
+  await expect(page.getByRole('progressbar')).toHaveCount(0);
   // The answers are already saved, so the profile step only asks for a first name.
   await expect(page.getByRole('radio')).toHaveCount(0);
   await expect(page.getByLabel(/First name/)).toBeVisible();
@@ -56,11 +58,13 @@ test('quiz-first: skipping markets sends no markets, and Back from the email ste
   await page.getByRole('radio', { name: /Beginner/ }).check();
   await page.getByRole('button', { name: 'Continue' }).click();
   await page.getByRole('button', { name: 'Continue' }).click();
+  const email = uniqueEmail();
+  await page.getByLabel('Email').fill(email);
   await page.getByRole('button', { name: 'Back' }).click();
   await expect(progress(page)).toHaveAttribute('aria-valuenow', '2');
   await page.getByRole('button', { name: 'Continue' }).click();
-  await page.getByLabel('Email').fill(uniqueEmail());
-  await page.keyboard.press('Enter');
+  await expect(page.getByLabel('Email')).toHaveValue(email);
+  await page.getByRole('button', { name: 'Try FX Replay Free' }).click();
   await expect(page.getByRole('heading', { name: 'Your free account is ready' })).toBeVisible();
   expect(bodies[0]).toMatchObject({ experienceLevel: 'beginner' });
   expect(bodies[0]).not.toHaveProperty('markets');
