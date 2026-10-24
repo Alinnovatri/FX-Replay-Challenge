@@ -33,7 +33,7 @@ Facts we may use in copy, all read on 2026-10-24:
 | Features: Replay mode, trading journal, prop firm simulator, custom indicators, economic calendar, AI analysis | [fxreplay.com](https://fxreplay.com/) |
 | No coding needed; built for manual traders practising execution | [fxreplay.com FAQ](https://fxreplay.com/) |
 | "Over 1 million traders have used it" | [fxreplay.com FAQ](https://fxreplay.com/) |
-| Not a broker; educational and backtesting platform only | Site footer disclosure |
+| Not a broker; educational and backtesting platform only | [fxreplay.com footer disclosure](https://fxreplay.com/) |
 
 Not used: testimonials and their names (the site itself warns they "may not reflect typical results"),
 paid-plan prices, and the pricing headline about profitable trading (against our no-performance-promise
@@ -52,7 +52,7 @@ give. Account access is a documented next step (owner decision 9).
 **Status:** open.
 Signup shows the same notice FX Replay's own signup uses, linking to their Privacy Policy and Terms. We
 don't send marketing email, so there is no marketing-consent checkbox. The PostHog project has
-`anonymize_ips` off; Stage 6 turns it on, and analytics carry no PII (working rule 9). A cookie banner is
+`anonymize_ips` off; Stage 6 turns it on, and analytics carry no PII (CLAUDE.md rule 7). A cookie banner is
 not added because we set no non-essential cookies before consent: the analytics identifier is first-party
 and its handling is decided in Stage 6 (ADR-003).
 
@@ -85,7 +85,7 @@ sRGB hex. Matches: Lato for headings, Nunito Sans for body, `h2` text `#F6F6F6` 
 | Default border | `#1F1F1F` | `border-primary` = `dark-700` `#1A1A1A` | Not a kit value |
 | Feature card border | `#173D85` | `border-brand` = `blue-600` | Not a kit value (nearest `blue-800` `#01307F`) |
 | Button font weight | Lato 400 at 14 px | No type scale in the kit | Recorded for Stage 5 |
-| Hero `h1` | Lato 700 at 54 px (37 px at a narrower viewport in Stage 0) | No type scale in the kit | Recorded for Stage 5 |
+| Hero `h1` | Lato 700 at 54 px | No type scale in the kit | Size depends on viewport; recorded for Stage 5 |
 
 The site has drifted from the kit in small ways. The project follows the kit (the delivered source), adjusted
 only by ADR-005 for contrast. Stage 5 may adopt the white primary CTA if the brand review agrees; that would be

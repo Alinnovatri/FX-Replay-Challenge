@@ -25,8 +25,8 @@ journal, AI trade analysis, a prop firm simulator and custom indicators in one p
 
 ## Target Audience
 
-**Target users:** Individual manual traders, from beginners to traders preparing for prop firm challenges (H,
-FAQ: "built specifically for manual traders"). B2C, so the B2B persona section is skipped.
+**Target users:** Individual manual traders (H, FAQ: "built specifically for manual traders"), including traders
+preparing for prop firm challenges (H, Prop Firm Simulator). B2C, so the B2B persona section is skipped.
 **Primary use case:** Testing a manual strategy on real historical data before trading it live (H).
 **Jobs to be done:**
 
@@ -42,11 +42,10 @@ tracking under challenge rules (H).
 **Core problem:** Traders go live on a strategy they have not tested; the site contrasts "a gut feeling" with
 replaying real data (H).
 **Why alternatives fall short (as FX Replay states it):** other tools are either automated code-based testers or
-replay tools with no analysis layer (H, FAQ). Courses and videos teach ideas that traders can't test on a chart
-(H, a testimonial; paraphrased as context, not used in copy).
-**What it costs them:** Real money and screen time; the FAQ says replay compresses "years of screen time into
+replay tools with no analysis layer (H, FAQ).
+**What it costs them:** Inference: real money when an untested strategy goes live. Screen time: the FAQ says replay compresses "years of screen time into
 hours" (H, FAQ).
-**Emotional tension:** Lack of confidence; the hero promises confidence from backtesting (H).
+**Emotional tension:** Lack of confidence; the hero ties confidence to backtesting (H).
 
 ## Competitive Landscape
 
@@ -59,7 +58,7 @@ replay tools without analysis (H). See Q-PC1.
 
 - Built for manual traders; no coding required (FXR Script is optional).
 - Replay, journal, AI analysis, prop firm simulator and custom indicators in one subscription.
-- Real historical data: about 120 assets across 6 markets on the home page; the FAQ lists Futures, Forex,
+- Real historical data: "120+ assets across 6 markets" on the home page; the FAQ lists Futures, Forex,
   Indices, Metals, Energy, Stocks, Crypto and Agricultural markets (H). Data history and seconds-level replay
   depend on the plan (P).
 
@@ -84,21 +83,17 @@ since the site positions against that category (H, FAQ). Marked as an inference.
 **Push:** Untested strategies and gut-feel decisions (H).
 **Pull:** Free start with no card; real historical data; everything in one place (H, P).
 **Habit:** Not stated. See Q-PC3.
-**Anxiety:** Whether practice on past data transfers to live trading; the site itself warns that simulated
+**Anxiety:** Inference: whether practice on past data transfers to live trading; the site itself warns that simulated
 results have limits (H, CFTC Rule 4.41 disclosure).
 
 ## Customer Language
 
-**How they describe the product (verbatim, short):**
-
-- "the best backtesting software in the game" (H, testimonial)
-- "see what actually works for you" (H, testimonial)
-
-Testimonials are quoted here as language evidence only. They are not used in the landing copy (A-003).
+**How they describe the product:** the site has testimonials, but they are excluded from this file so that
+drafting skills can't reuse them (A-003). Customer verbatims are an open question (Q-PC2).
 
 **Words to use:** backtest, replay, practice, test your edge, real historical data, journal, sample (H).
 **Words to avoid:** profit, profitable, guaranteed, win rate, returns, "become a better trader" as a promise.
-Reason: working rule 7 and the site's own risk disclosure (H).
+Reason: CLAUDE.md rule 5 and the site's own risk disclosure (H).
 **Glossary:**
 
 | Term | Meaning |
@@ -112,19 +107,19 @@ Reason: working rule 7 and the site's own risk disclosure (H).
 
 | Attribute | Means | Doesn't mean | Example line |
 | --- | --- | --- | --- |
-| Evidence first | Claims rest on testing and records | Statistics or results we can't show | "Evidence over win rate" (H) |
+| Evidence first | Claims rest on testing and records | Statistics or results we can't show | "Test your edge across a larger sample" (H) |
 | Direct | Short imperative lines | Hype or exclamation marks | "Test it before you trust it." (H) |
 | Disciplined | Process, reps, consistency | Shortcuts or overnight change | "Build trust in your strategy, one rep at a time" (H) |
 
 **Tone by context:** errors and support are calm and specific; the site's help copy points to the Help Center
 and Discord (H). Launch, sales and social tone: not observed. See Q-PC4.
 **Terms we own:** FXR Journal, FXR Script, Replay mode (H).
-**Never use (and why):** performance or profit promises (rule 7; CFTC disclosure on H).
+**Never use (and why):** performance or profit promises (CLAUDE.md rule 5; CFTC disclosure on H).
 
 ## Proof Points
 
 **Metrics:** "Over 1 million traders have used it" (H, FAQ); the meta description says "Trusted by 1M+ traders"
-(H). About 120 assets across 6 markets on the home page (H).
+(H). "120+ assets across 6 markets" on the home page (H).
 **Customers:** Individual traders; no logos on the site.
 **Testimonials:** Present on the site but not used here (A-003).
 **Value themes:**
@@ -153,8 +148,8 @@ Built only from the facts above.
 | Problem (internal) | Doubt: decisions feel like a gut call |
 | Problem (philosophical) | A strategy should be tested before it is trusted |
 | Guide (empathy) | FX Replay is built for manual traders practising execution (H) |
-| Guide (authority) | Over 1 million traders have used it; real historical data on about 120 assets (H) |
-| Plan | 1. Create a free account (no card). 2. Replay a market on real historical data. 3. Review every trade in the journal |
+| Guide (authority) | Over 1 million traders have used it; real historical data on 120+ assets across 6 markets (H) |
+| Plan | 1. Create a free account, no card needed (P). 2. Replay a strategy on real historical data (H). 3. Review every trade (H, "review every trade") |
 | Call to action (direct) | Try FX Replay Free |
 | Call to action (transitional) | See what the free plan includes (P) |
 | Avoid failure | Going live with an untested strategy and no record of what you did |
@@ -168,7 +163,7 @@ Success is framed as evidence and process, never as profit.
 
 | Date | Learning | Evidence | Applies to | Status |
 | --- | --- | --- | --- | --- |
-| 2026-10-24 | Promote only the free plan and never cite performance | Owner rule 7; site risk disclosure (H) | copywriting, cro, signup | active |
+| 2026-10-24 | Promote only the free plan and never cite performance | CLAUDE.md rule 5; site risk disclosure (H) | copywriting, cro, signup | active |
 
 ## Open questions
 
@@ -183,4 +178,5 @@ These go to FX Replay; until answered, copy doesn't rely on them.
 
 *Newest first.*
 
-- v1 (2026-10-24) — Initial context drafted from fxreplay.com, pricing and signup pages.
+- v1 (2026-10-24) — Initial context drafted from fxreplay.com, pricing and signup pages; brand-copy-reviewer
+  findings applied before the first commit to main.
