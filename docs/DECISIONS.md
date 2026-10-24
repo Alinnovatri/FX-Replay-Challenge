@@ -93,7 +93,9 @@ the contrast report.
 **Status:** accepted (2026-10-24).
 `main` requires a pull request, blocks force pushes and deletion, and applies to admins. No approving review
 is required: there is one maintainer, and a required review would block every merge. Required status checks
-are added in Stage 2, once CI exists. This matches the one-PR-per-stage flow and doesn't slow it down.
+are added in Stage 2, once CI exists. Amended 2026-10-24 (Stage 2): `main` now requires "Lint, typecheck,
+unit tests, config", "Build, E2E with axe, Lighthouse", "CodeQL", "Secrets scan (full history)" and
+"pnpm audit (production deps)", not strict (a branch need not be up to date with `main`). This matches the one-PR-per-stage flow and doesn't slow it down.
 
 ## ADR-007: MCP servers in use
 

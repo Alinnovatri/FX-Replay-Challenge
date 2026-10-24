@@ -3,7 +3,7 @@
 A "Try FX Replay Free" landing page, a signup flow and a Users API, built to raise the conversion rate from
 marketing traffic to account creation. Conversion is counted only when the server confirms the account.
 
-- Production: TODO(stage-2): recorded after the first production deploy.
+- Production: <https://fx-replay-challenge.vercel.app> (smoke: `BASE_URL=https://fx-replay-challenge.vercel.app pnpm smoke`).
 - Brief: [docs/brief.md](docs/brief.md). Plan and budgets: [docs/PLAN.md](docs/PLAN.md). Decisions:
   [docs/DECISIONS.md](docs/DECISIONS.md). AI workflow log: [docs/ai-log.md](docs/ai-log.md).
 
