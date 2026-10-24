@@ -227,3 +227,20 @@ loudly). `pnpm typecheck` clean, `pnpm lint` 0 issues, `pnpm build` lists `/user
   retry window is documented in ADR-004 instead of fixed.
 
 **Validation after fixes:** `pnpm test` 26 of 26; `pnpm typecheck` clean; `pnpm lint` 0 issues.
+
+**Production verification (after merging PR #14; the owner set `ADMIN_TOKEN` and `SESSION_SECRET` in Vercel):**
+
+- Build log via the Vercel MCP: `migrate: applied migrations with neon`; routes `/users` and `/users/[id]`;
+  deployment READY with the `fx-replay-challenge.vercel.app` alias. Runtime errors: none.
+- `pnpm smoke`: `/` 200, `/api/health` 200 `db=ok`.
+- `node scripts/verify-api.mjs` (no secrets): 12 of 12 (201 with all cookie attributes, idempotent replay,
+  409 `EMAIL_TAKEN` case-insensitive, 409 `IDEMPOTENCY_CONFLICT`, 400 with `fields.email`, cookie PATCH 200,
+  cookie email 403, no credentials 401, cookie on another id 403, admin GET without token 401, request ids).
+- Admin `GET /users`, run by the owner in their own terminal with `read -rs` (the token never entered the
+  session): 200 with 1 user and no next cursor; a wrong token 401.
+- Data written to production: one test user, id `edcb55da-9d4a-4379-a08b-67688980f16f`, email on the reserved
+  `example.test` domain, with a test profile. Stage 6 excludes `example.test` traffic from the funnel.
+- Process note: the owner's first two attempts ran from the chat's `!` input, which has no TTY (so `read -rs`
+  read nothing) and would have put the output in the conversation. Instructions now say "your own terminal".
+
+**End:** recorded in the stage report from `date`.
