@@ -1,11 +1,35 @@
 import type { Metadata } from 'next';
-import { Lato, Nunito_Sans } from 'next/font/google';
+import localFont from 'next/font/local';
 import './globals.css';
 
-const lato = Lato({ subsets: ['latin'], weight: ['400', '700', '900'], variable: '--font-lato', display: 'swap' });
-const nunito = Nunito_Sans({
-  subsets: ['latin'],
-  weight: ['400', '600', '700'],
+// Self-hosted from pinned @fontsource packages (OFL-1.1): the build never fetches fonts over the network.
+const lato = localFont({
+  src: [
+    { path: '../../node_modules/@fontsource/lato/files/lato-latin-400-normal.woff2', weight: '400', style: 'normal' },
+    { path: '../../node_modules/@fontsource/lato/files/lato-latin-700-normal.woff2', weight: '700', style: 'normal' },
+    { path: '../../node_modules/@fontsource/lato/files/lato-latin-900-normal.woff2', weight: '900', style: 'normal' },
+  ],
+  variable: '--font-lato',
+  display: 'swap',
+});
+const nunito = localFont({
+  src: [
+    {
+      path: '../../node_modules/@fontsource/nunito-sans/files/nunito-sans-latin-400-normal.woff2',
+      weight: '400',
+      style: 'normal',
+    },
+    {
+      path: '../../node_modules/@fontsource/nunito-sans/files/nunito-sans-latin-600-normal.woff2',
+      weight: '600',
+      style: 'normal',
+    },
+    {
+      path: '../../node_modules/@fontsource/nunito-sans/files/nunito-sans-latin-700-normal.woff2',
+      weight: '700',
+      style: 'normal',
+    },
+  ],
   variable: '--font-nunito',
   display: 'swap',
 });
