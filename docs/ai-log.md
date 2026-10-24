@@ -483,7 +483,7 @@ proposal, not an owner correction; `vercel env ls` was blocked by the classifier
 
 ## Stage 5b: Landing redesign (2026-10-24)
 
-**Start:** 05:44:45 (UTC-6), entirely in overrun of the 6-hour budget (owner decision, see Stage 8).
+**Start:** 05:44:45 (UTC-6). **End:** 06:35:50, before the PR. Entirely in overrun of the 6-hour budget (owner decision, see Stage 8).
 
 **Owner requests:** a less basic landing built from fxreplay.com research without copying it; name and email on
 the same signup screen; a fixed `/variants/control` URL next to `/variants/quiz`.
