@@ -181,4 +181,12 @@ scripts 137,114 B; `pnpm audit --prod` no known vulnerabilities. Ports 3200 and 
 - Dependabot opened PRs #4 to #10 and #12 on its first run. None is merged: #12 bumps `react` without
   `react-dom`, and #6 and #8 bump CodeQL `init` and `analyze` separately. They are reviewed together in Stage 7.
 
+- PR #13's previews failed with `BUILD_FAILED` "Resource provisioning failed" before any build step. The Vercel
+  MCP (after the owner authorised the `planetario-web` team) showed 9 Git branches had built previews since
+  Neon was connected, 7 of them Dependabot's. Inferred cause, not verified in Neon: each preview gets a Neon
+  branch and the Free plan allows 10 per project. With the owner's approval: `vercel.json` disables
+  deployments for `dependabot/**`, Dependabot PRs #4 to #10 and #12 were closed with a comment, and the owner
+  deleted the stale Neon branches. Lesson: enabling Dependabot and per-preview database branches in the same
+  stage multiplied preview resources; the consequence only showed on the next human PR.
+
 **End:** recorded in the stage report from `date`.
