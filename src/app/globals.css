@@ -154,3 +154,54 @@ details[open] .chevron {
 input[aria-invalid='true'] {
   border-color: var(--text-error);
 }
+
+/* Redesign surfaces: subtle depth from tokens only, no images or filters on scroll. */
+.glass {
+  background: color-mix(in srgb, var(--bg-secondary) 88%, transparent);
+}
+.window {
+  box-shadow: 0 30px 80px -40px color-mix(in srgb, var(--btn-bg-primary-active) 45%, transparent);
+}
+.window .dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 9999px;
+  background: var(--border-tertiary);
+}
+.icon-badge {
+  display: inline-flex;
+  width: 44px;
+  height: 44px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  color: var(--color-blue-400);
+  background: color-mix(in srgb, var(--btn-bg-primary-active) 14%, transparent);
+}
+.step-number {
+  font-family: var(--font-lato), var(--font-display);
+  font-size: 2rem;
+  font-weight: 900;
+  line-height: 1;
+  color: var(--color-blue-400);
+}
+.quote-card {
+  background: linear-gradient(180deg, var(--bg-secondary), var(--bg-primary));
+}
+.final-cta {
+  isolation: isolate;
+  background: var(--bg-secondary);
+}
+.final-cta::before {
+  content: '';
+  position: absolute;
+  inset: auto -20% -60% -20%;
+  height: 120%;
+  background: radial-gradient(
+    closest-side,
+    color-mix(in srgb, var(--btn-bg-primary-active) 30%, transparent),
+    transparent
+  );
+  z-index: -1;
+  pointer-events: none;
+}
