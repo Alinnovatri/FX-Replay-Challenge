@@ -1,19 +1,35 @@
 #!/usr/bin/env node
 // PreToolUse hook: blocks any tool call that would read, write or print a .env file other than .env.example.
 // Exit code 2 blocks the call and shows the message to Claude.
-import { readFileSync } from 'node:fs';
+//
+// Every string field that can carry a path (file paths, globs, shell commands, URLs) is split into tokens and
+// path segments. Any segment that starts with ".env" is blocked unless it is exactly ".env.example", so globs
+// (.env*), variants (.envrc, .env-local, .env.example.bak) and redirects (<.env) are all caught.
+// Known false positive, accepted: text that merely mentions ".env", such as a commit message, is blocked too.
+import { readFileSync, realpathSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
 
-const ENV_FILE = /(^|[\s/'"=:(])\.env(?!\.example\b)(\.[\w.-]+)?(?=$|[\s'")|;&>])/;
+const FIELDS = ['file_path', 'path', 'pattern', 'glob', 'command', 'notebook_path', 'url'];
+const SEPARATORS = /[\s'"`<>()=:;,&|{}[\]\\/]+/;
+
+export function envSegments(value) {
+  return value.split(SEPARATORS).filter((segment) => /^\.env/i.test(segment) && segment !== '.env.example');
+}
 
 export function blockedReason(event) {
   const input = event?.tool_input ?? {};
-  const candidates = [input.file_path, input.path, input.pattern, input.glob, input.command, input.notebook_path]
-    .filter((value) => typeof value === 'string');
-  const hit = candidates.find((value) => ENV_FILE.test(value));
-  return hit ? `env-guard: ${event.tool_name} touches a .env file (only .env.example is allowed). Secrets stay out of the session.` : null;
+  for (const field of FIELDS) {
+    const value = input[field];
+    if (typeof value !== 'string') continue;
+    const hits = envSegments(value);
+    if (hits.length) {
+      return `env-guard: ${event.tool_name} ${field} touches ${hits.join(', ')} (only .env.example is allowed). Secrets stay out of the session.`;
+    }
+  }
+  return null;
 }
 
-if (process.argv[1] === new URL(import.meta.url).pathname) {
+function main() {
   let event;
   try {
     event = JSON.parse(readFileSync(0, 'utf8'));
@@ -27,3 +43,6 @@ if (process.argv[1] === new URL(import.meta.url).pathname) {
     process.exit(2);
   }
 }
+
+// Compare real paths so a symlinked project dir or a path with spaces still runs the guard.
+if (process.argv[1] && realpathSync(process.argv[1]) === fileURLToPath(import.meta.url)) main();
