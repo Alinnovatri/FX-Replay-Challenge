@@ -299,3 +299,14 @@ TBT 21 ms, HTML 3,473 B, scripts 156,971 B. Ports 3200 and 3300 free afterwards.
 
 **Validation (final):** `pnpm e2e` 26 of 26, three consecutive runs; `pnpm test` 33 of 33, three consecutive
 runs; `pnpm lint` 0 issues; `pnpm typecheck` clean. Ports 3200 free.
+
+**Production verification (after merging PR #16):** deployment READY (Vercel CLI `inspect --wait`); `pnpm smoke`
+200 and `db=ok`. With the Playwright MCP at 360 x 800 on `https://fx-replay-challenge.vercel.app/#signup`:
+signup with `smoke+prod-signup-0315@example.test` reached "Your free account is ready" with focus on the
+heading; the profile step (first name, intermediate, futures) saved with focus on "Profile saved. Thanks.";
+axe-core 4.10.2 on that final state: 0 violations; no horizontal overflow at 360 px; the profile cookie is not
+readable from JavaScript (HttpOnly). Vercel runtime errors: none. Console: one 404 for `/favicon.ico`, fixed
+in Stage 5 with an icon generated from the brand isotype.
+Data written to production: test user `smoke+prod-signup-0315@example.test` with a test profile.
+
+**End:** 03:16:41, from `date`: 27 min against a 35 min budget.
