@@ -54,7 +54,7 @@ also get `path` (same-origin path only) and `utm_source`, `utm_medium`, `utm_cam
 | --- | --- | --- | --- |
 | `landing_viewed` | Landing renders (`PageView`) | Relay | `referrer_domain`: hostname of `document.referrer`, null when absent or internal |
 | `cta_clicked` | A "Try FX Replay Free" link in the header or the final section | Relay | `cta_id`: `header` or `final` |
-| `signup_started` | First focus on the email field (control) or first answer in the quiz (variant) | Relay | none |
+| `signup_started` | First focus on the name or email field (control) or first answer in the quiz (variant) | Relay | none |
 | `signup_submitted` | A valid form is submitted (client validation passed) | Relay | none |
 | `signup_failed` | The API answers with an error, or the request times out or fails | Relay | `error_code`: `VALIDATION_FAILED`, `EMAIL_TAKEN`, `IDEMPOTENCY_CONFLICT`, `INTERNAL`, `TIMEOUT`, `NETWORK` |
 | `quiz_step_completed` | A quiz step is completed for the first time (variant only; going Back and resubmitting is not counted again) | Relay | `step`: 1 or 2 |
@@ -95,5 +95,5 @@ conversion window of 1 day.
   Lighthouse run with `ANALYTICS_SINK=log`, so their events never reach PostHog. Rate limiting is Stage 7.
 - **Known limits:** visitors who block cookies get no `__Host-fxr_aid` and their relay events are rejected (the
   conversion is still counted, with the user id as distinct id); clearing cookies starts a new visitor. Bots are
-  not filtered beyond PostHog's defaults. A visitor who opens `/variants/quiz` directly is moved to the quiz arm
-  (QA links); such links are not published, and `?fxr_variant=` only works outside production.
+  not filtered beyond PostHog's defaults. A visitor who opens `/variants/quiz` or `/variants/control` directly is moved to
+  that arm (QA links); such links are not published, and `?fxr_variant=` only works outside production.

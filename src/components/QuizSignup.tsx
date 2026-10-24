@@ -12,7 +12,7 @@ const TOTAL_STEPS = 3;
 const LEVELS: Record<(typeof EXPERIENCE_LEVELS)[number], { label: string; hint: string }> = {
   beginner: { label: 'Beginner', hint: 'Learning how markets move' },
   intermediate: { label: 'Intermediate', hint: 'Trading a strategy, refining it' },
-  advanced: { label: 'Advanced', hint: 'Stress-testing a proven process' },
+  advanced: { label: 'Advanced', hint: 'Stress-testing an established process' },
 };
 const MARKET_LABELS: Record<(typeof MARKETS)[number], string> = {
   forex: 'Forex',
@@ -36,6 +36,7 @@ export function QuizSignup() {
   const [answers, setAnswers] = useState<SignupAnswers>({});
   // Kept here so Back from the email step doesn't lose what was typed (WCAG 3.3.7).
   const [email, setEmail] = useState('');
+  const [name, setName] = useState('');
   const [done, setDone] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const titleRef = useRef<HTMLHeadingElement>(null);
@@ -97,7 +98,7 @@ export function QuizSignup() {
   const titles = [
     'How would you describe your trading?',
     'Which markets do you want to practise?',
-    'Where should we create your free account?',
+    'Who should we create the free account for?',
   ];
 
   return (
@@ -221,6 +222,8 @@ export function QuizSignup() {
             onBack={() => go(2)}
             initialEmail={email}
             onEmailChange={setEmail}
+            initialName={name}
+            onNameChange={setName}
             onSuccess={() => setDone(true)}
           />
         ) : null}

@@ -24,14 +24,20 @@ const emailField = (page: Page) => page.getByLabel('Email');
 const submit = (page: Page) => page.getByRole('button', { name: /Try FX Replay Free|Creating your account/ });
 
 test('signs up, completes the optional profile, with no axe violations in any state', async ({ page }) => {
+  const bodies: Record<string, unknown>[] = [];
+  page.on('request', (req) => {
+    if (req.method() === 'POST' && new URL(req.url()).pathname === '/users') bodies.push(req.postDataJSON());
+  });
   await page.goto('/#signup');
   await expectNoAxeViolations(page);
+  await page.getByLabel(/First name/).fill('Ana');
   await emailField(page).fill(uniqueEmail('happy'));
   await submit(page).click();
   await expect(page.getByRole('heading', { name: 'Your free account is ready' })).toBeFocused();
   await expectNoAxeViolations(page);
 
-  await page.getByLabel(/First name/).fill('Ana');
+  expect(bodies[0]).toMatchObject({ firstName: 'Ana' });
+  await expect(page.getByLabel(/First name/)).toHaveCount(0);
   await page.getByRole('radio', { name: 'Beginner' }).check();
   await page.getByRole('checkbox', { name: 'Forex' }).check();
   await page.getByRole('button', { name: 'Save profile' }).click();
@@ -85,6 +91,23 @@ test('a server error offers a retry that succeeds', async ({ page }) => {
   await expect(page.getByRole('heading', { name: 'Your free account is ready' })).toBeFocused();
 });
 
+test('a rejected first name shows a form error without a retry button', async ({ page }) => {
+  await page.route('**/users', (route) =>
+    route.fulfill({
+      status: 400,
+      json: { error: { code: 'VALIDATION_FAILED', message: 'x', requestId: 'r', fields: { firstName: 'Too long' } } },
+    }),
+  );
+  await page.goto('/#signup');
+  await page.getByLabel(/First name/).fill('Ana');
+  await emailField(page).fill(uniqueEmail('badname'));
+  await submit(page).click();
+  await expect(page.getByText('Check your first name and submit again.')).toBeFocused();
+  await expect(emailField(page)).not.toHaveAttribute('aria-invalid', 'true');
+  await expect(page.getByRole('button', { name: 'Try again' })).toHaveCount(0);
+  await expectNoAxeViolations(page);
+});
+
 test('a timeout offers a retry that reuses the same Idempotency-Key', async ({ page }) => {
   await page.clock.install();
   const requests = trackSignupRequests(page);
@@ -109,6 +132,28 @@ test('a timeout offers a retry that reuses the same Idempotency-Key', async ({ p
   expect(requests[1]?.key).toBe(requests[0]?.key);
 });
 
+test('changing the name after a timeout starts a new attempt with a new key', async ({ page }) => {
+  await page.clock.install();
+  const requests = trackSignupRequests(page);
+  let hang = true;
+  await page.route('**/users', async (route) => {
+    if (hang) return;
+    await route.continue();
+  });
+  await page.goto('/#signup');
+  await emailField(page).fill(uniqueEmail('rename'));
+  await submit(page).click();
+  await page.clock.fastForward(10_500);
+  await expect(page.getByText('This is taking longer than usual')).toBeFocused();
+  hang = false;
+  await page.getByLabel(/First name/).fill('Bea');
+  await page.getByRole('button', { name: 'Try again' }).click();
+  await expect(page.getByRole('heading', { name: 'Your free account is ready' })).toBeFocused();
+  expect(requests).toHaveLength(2);
+  expect(requests[1]?.key).toBeTruthy();
+  expect(requests[1]?.key).not.toBe(requests[0]?.key);
+});
+
 test('double-clicking submit sends one request', async ({ page }) => {
   const requests = trackSignupRequests(page);
   await page.route('**/users', async (route) => {
@@ -124,7 +169,7 @@ test('double-clicking submit sends one request', async ({ page }) => {
 
 test('the whole flow works with the keyboard only', async ({ page }) => {
   await page.goto('/');
-  // Tab from the top: skip link, header CTA, then the email field in the hero form.
+  // Tab from the top: skip link, header CTA, "See how it works", first name, then the email field.
   for (let i = 0; i < 6 && !(await emailField(page).evaluate((el) => el === document.activeElement)); i += 1) {
     await page.keyboard.press('Tab');
   }
@@ -163,4 +208,15 @@ test('an empty email shows the required message', async ({ page }) => {
   await submit(page).click();
   await expect(page.locator('form [role="alert"]')).toContainText('Enter your email address');
   await expect(emailField(page)).toBeFocused();
+});
+
+test('signup_started fires once, on the first focus of the name field', async ({ page }) => {
+  const events: string[] = [];
+  page.on('request', (req) => {
+    if (new URL(req.url()).pathname === '/api/e') events.push((req.postDataJSON() as { name: string }).name);
+  });
+  await page.goto('/#signup');
+  await page.getByLabel(/First name/).focus();
+  await emailField(page).focus();
+  await expect.poll(() => events.filter((e) => e === 'signup_started')).toHaveLength(1);
 });

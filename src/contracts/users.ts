@@ -25,6 +25,8 @@ const profileFields = {
  */
 export const createUserSchema = z.strictObject({
   email,
+  // Asked next to the email in both arms (optional).
+  firstName: profileFields.firstName,
   experienceLevel: profileFields.experienceLevel,
   markets: profileFields.markets,
 });

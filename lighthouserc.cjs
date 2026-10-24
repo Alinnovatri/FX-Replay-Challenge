@@ -4,7 +4,7 @@ module.exports = {
     collect: {
       startServerCommand: 'node node_modules/next/dist/bin/next start -p 3300',
       startServerReadyPattern: 'Ready',
-      url: ['http://127.0.0.1:3300/', 'http://127.0.0.1:3300/variants/quiz'],
+      url: ['http://127.0.0.1:3300/', 'http://127.0.0.1:3300/variants/quiz', 'http://127.0.0.1:3300/variants/control'],
       numberOfRuns: 3,
       settings: { throttlingMethod: 'devtools', extraHeaders: JSON.stringify({ 'x-fxr-test': '1' }) }, // default mobile form factor: the stricter profile
     },

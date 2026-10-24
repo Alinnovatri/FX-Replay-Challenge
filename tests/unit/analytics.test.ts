@@ -148,6 +148,16 @@ describe('proxy: experiment assignment', () => {
     vi.unstubAllEnvs();
   });
 
+  it('pins the arm on the fixed QA URLs, in production too', () => {
+    vi.stubEnv('VERCEL_ENV', 'production');
+    const control = visit('https://app.test/variants/control', '__Host-fxr_variant=quiz');
+    expect(control.cookies.get('__Host-fxr_variant')?.value).toBe('control');
+    expect(control.headers.get('x-middleware-rewrite')).toBeNull();
+    const quiz = visit('https://app.test/variants/quiz', '__Host-fxr_variant=control');
+    expect(quiz.cookies.get('__Host-fxr_variant')?.value).toBe('quiz');
+    vi.unstubAllEnvs();
+  });
+
   it('tags test traffic and honours an explicit override outside production', () => {
     const res = visit('https://app.test/?fxr_variant=quiz&fxr_test=1', '__Host-fxr_variant=control');
     expect(res.cookies.get('__Host-fxr_variant')?.value).toBe('quiz');

@@ -55,8 +55,13 @@ async function send<T>(
 }
 
 /** The same idempotency key must be reused for retries of one signup attempt. */
-export const createUser = (email: string, idempotencyKey: string, answers: SignupAnswers = {}) =>
-  send<{ user: User }>('/users', 'POST', { email, ...answers }, { 'idempotency-key': idempotencyKey });
+export const createUser = (email: string, idempotencyKey: string, answers: SignupAnswers = {}, firstName = '') =>
+  send<{ user: User }>(
+    '/users',
+    'POST',
+    { email, ...(firstName ? { firstName } : {}), ...answers },
+    { 'idempotency-key': idempotencyKey },
+  );
 
 export const updateProfile = (id: string, changes: Record<string, unknown>) =>
   send<{ user: User }>(`/users/${id}`, 'PATCH', changes);

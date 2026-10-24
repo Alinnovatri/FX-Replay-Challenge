@@ -52,7 +52,7 @@ Stage 4). Implementation notes are at the end of this ADR.
 
 | Endpoint | Auth | Success | Notes |
 | --- | --- | --- | --- |
-| `POST /users` | None | `201` with the user | Body: `email` (required). Optional `Idempotency-Key` header; a replay with the same key and body returns the original `201`. Sets the self-service cookie |
+| `POST /users` | None | `201` with the user | Body: `email` (required); optional `firstName`, `experienceLevel` and `markets` (redesign, ADR-013). Optional `Idempotency-Key` header; a replay with the same key and body returns the original `201`. Sets the self-service cookie |
 | `PATCH /users/:id` | Admin token, or the self-service cookie for the same id | `200` with the user | The cookie allows profile fields only, never `email` |
 | `GET /users` | Admin token | `200` with a page of users | Cursor pagination, `limit` at most 100 |
 
@@ -251,7 +251,8 @@ data, so it is tested, not assumed:
 - **Variant:** quiz-first (`QuizSignup`), a static page at `/variants/quiz`: step 1 experience level (required),
   step 2 markets (optional), step 3 email. A `role="progressbar"` with "Step n of 3", focus moved to each
   step's question, Back keeps answers. The answers are sent with `POST /users` (both optional in the contract),
-  so they are saved with the account; the profile step then asks only for a first name.
+  so they are saved with the account. Since the redesign (ADR-013) the first name is asked next to the email in
+  both arms, so the quiz has no step after signup.
 - **Conversion stays the same for both:** the server-confirmed `POST /users` (`user_signed_up`). Stage 6 assigns
   visitors 50/50 on the server and serves the variant at `/` (no client-side flash), with the sample size and
   decision rules in EXPERIMENT.md.
@@ -275,3 +276,21 @@ data, so it is tested, not assumed:
   progress bar and step transitions. `prefers-reduced-motion` turns all of it off.
 - SEO: `metadataBase`, canonical, Open Graph and Twitter cards, a `SoftwareApplication` JSON-LD with the free
   offer, `robots.txt` (disallows `/users` and `/api/`) and `sitemap.xml`. Lighthouse audits both pages.
+
+## ADR-013: Landing redesign, name at signup and the control QA URL
+
+**Status:** accepted (2026-10-24, owner: "OK, adelante con el plan del rediseño").
+
+- **Name at signup:** the optional first name sits on the same screen as the email in both arms (owner request).
+  `createUserSchema` accepts it; the idempotency fingerprint includes it, so editing the name after a timeout
+  starts a new attempt. The control's profile step keeps level and markets; the quiz has no step after signup.
+  `signup_started` fires once, on the first focus of the name or the email.
+- **`/variants/control`:** a static page that renders the control arm and pins `__Host-fxr_variant=control`,
+  like `/variants/quiz`, in production too, so both arms can be reviewed from fixed links. Canonical is `/`.
+- **Product screenshots:** three images from fxreplay.com (`brand/screenshots/SOURCES.md`), served with
+  `next/image` static imports (explicit sizes, lazy below the fold). The journal image is cropped at display time
+  so its sample win-rate and profit panel never shows (no-performance-promise rule). Mentor AI and prop firm
+  images were dropped because they show performance figures or rules we can't source.
+- **Layout:** trust strip, a showcase window, a bento grid of five features, "How replay works in FX Replay",
+  audience questions, FAQ and final CTA, built with the existing tokens; no new dependencies (inline Lucide
+  icons, ISC). Tabs were rejected: they hide content from scanners and add client JavaScript.

@@ -1,5 +1,6 @@
-// Landing copy, drafted with the vendored copywriting skill (Situation A) from docs/PRODUCT_CONTEXT.md.
-// Every claim maps to docs/ASSUMPTIONS.md A-003; sources noted per line. No testimonials, no performance claims.
+// Landing copy. Drafted with the vendored copywriting skill (Stage 5) and rewritten in the redesign from the
+// sections of fxreplay.com recorded in docs/ASSUMPTIONS.md A-003. Every claim maps to a sourced row there.
+// No testimonials, no performance claims, no prices beyond the free plan.
 
 export const hero = {
   eyebrow: 'Backtesting and trading practice',
@@ -9,39 +10,97 @@ export const hero = {
   // without risking real money (fxreplay.com FAQ and meta description)
   subtitle:
     'Replay historical price action, practise your entries and exits, and review every trade with no real money at stake.',
-  // "Over 1 million traders have used it" (fxreplay.com FAQ)
-  proof: 'Over 1 million traders have used FX Replay.',
+  secondaryCta: 'See how it works',
 };
 
-export const problem = {
-  // PRODUCT_CONTEXT "Core problem": traders go live on a strategy they have not tested (gut feeling vs real data)
-  title: 'Going live on a gut feeling is the risk',
-  body: 'Replay it on real historical data, see how it behaved, and keep a record of every decision before you put money behind it.',
+// A-003: "Over 1 million traders have used it"; "120+ assets across 6 markets"; free plan without a card.
+export const trust = [
+  { value: '1M+', label: 'traders have used FX Replay' },
+  { value: '120+', label: 'assets across 6 markets' },
+  { value: '$0', label: 'free plan, no credit card' },
+];
+
+export const showcase = {
+  title: 'One workspace for every rep',
+  body: 'Pick a date, replay the chart candle by candle, place trades and keep the economic calendar and your journal one click away.',
+  // Visible in the screenshot: replay controls, Journal, Analytics, Economic Calendar (brand/screenshots/hero-poster.webp)
+  alt: 'FX Replay replay workspace: a futures chart paused mid-session with replay controls, journal, analytics and economic calendar buttons',
+  chips: ['Replay mode', 'Economic calendar', 'Journal', 'Analytics'],
 };
 
-export const plan = {
-  title: 'Three steps to your first backtest',
-  steps: [
-    { title: 'Create your free account', body: 'Email only. The free plan needs no credit card.' },
-    { title: 'Replay a market', body: 'Pick an asset and a date, then trade price action as it unfolded.' },
-    { title: 'Review every trade', body: 'Check entries, exits and outcomes before you trade live.' },
+export const benefits = {
+  title: 'Replay, journal and review in one loop',
+  intro:
+    'Replay, journal and prop firm rules live in one product, so every session ends with something you can review.',
+  items: [
+    {
+      id: 'replay',
+      title: 'Test it before you trust it',
+      // A-003: replay real historical data and review every trade
+      body: 'Replay a strategy on real historical data, review every trade, and go live knowing how it behaved.',
+    },
+    {
+      id: 'journal',
+      title: 'A record you can review',
+      // A-003: FXR Journal; the journal compares the plan with what happened, privately
+      body: 'Entries, exits, notes, tags and outcomes stay tied to each session, so you can compare the plan with what actually happened.',
+      // brand/screenshots/backtest.webp (sample data on fxreplay.com)
+      alt: 'FX Replay journal: a table of sample trades with session, entry date, asset, side, return and tag columns',
+    },
+    {
+      id: 'prop',
+      title: 'Rehearse the challenge',
+      // A-003: prop firm simulator, sizing, drawdown and execution under challenge rules
+      body: 'Run your strategy under prop firm rules and see whether sizing, drawdown control and execution hold.',
+    },
+    {
+      id: 'mentor',
+      title: 'Find the pattern behind mistakes',
+      // A-003: Mentor AI across sessions
+      body: 'Mentor AI looks across your sessions to surface recurring execution issues for the next review.',
+    },
+    {
+      id: 'script',
+      title: 'Turn a setup into an indicator',
+      // A-003: FXR Script, optional
+      body: "FXR Script turns a tested setup into your own indicator. You don't need to code to backtest; FXR Script is optional.",
+    },
   ],
 };
 
-export const features = {
-  // PRODUCT_CONTEXT "Key differentiators": replay, journal and prop firm simulation in one product
-  title: 'Replay, journal and prop firm rules in one place',
-  // "120+ assets across 6 markets with real historical data" (fxreplay.com)
-  coverage: '120+ assets across 6 markets, with real historical data.',
-  items: [
-    { title: 'Replay mode', body: 'Jump to any date and experience price action as it unfolded.' },
+export const plan = {
+  // How replay works in the product (A-003 rows on Replay mode); not what signing up on this page gives (A-004).
+  title: 'How replay works in FX Replay',
+  steps: [
+    { title: 'Pick a market and a date', body: 'Choose one of 120+ assets and jump to the day you want to practise.' },
     {
-      title: 'FXR Journal',
-      body: 'Entries, exits, notes, tags and outcomes stay tied to each session, so reviews rest on what you did.',
+      title: 'Turn on replay',
+      body: 'Go back to any date in your session and watch price unfold as it happened.',
+      // brand/screenshots/replay.webp shows this settings card
+      alt: 'FX Replay setting to enable replay, which lets you go back to any date after the session start date',
+    },
+    { title: 'Trade it and review it', body: 'Place trades as price unfolds, then check entries, exits and outcomes.' },
+  ],
+};
+
+export const audience = {
+  title: 'Built for the questions traders ask',
+  // A-003: fxreplay.com use-case questions
+  items: [
+    {
+      who: 'If you are learning',
+      q: 'Is my edge real, or a lucky streak?',
+      a: 'Run a strategy across different conditions and a real sample of trades, so confidence comes from data instead of a few good days.',
     },
     {
-      title: 'Prop Firm Simulator',
-      body: 'Run your strategy under challenge rules and track drawdown before the real challenge.',
+      who: 'If you are refining a strategy',
+      q: 'Is the strategy failing, or is execution drifting?',
+      a: 'Compare the plan with what actually happened in each session. Your journal is private.',
+    },
+    {
+      who: 'If you are preparing for a prop firm challenge',
+      q: 'Does my risk process hold under pressure?',
+      a: 'See whether position sizing, drawdown control and execution stay consistent when the rules leave less room for error.',
     },
   ],
 };
@@ -57,7 +116,12 @@ export const faq = {
     {
       q: 'Do I need to know how to code?',
       // fxreplay.com FAQ
-      a: 'No. FX Replay is built for manual traders: you replay markets and log trades through the interface.',
+      a: 'No. FX Replay is built for manual traders: you replay markets and log trades through the interface. FXR Script is optional.',
+    },
+    {
+      q: 'Which markets can I practise?',
+      // A-003: markets listed in the fxreplay.com FAQ
+      a: 'Markets include futures, forex, indices, metals, energy, stocks, crypto and agricultural markets, all with real historical data.',
     },
     {
       q: 'What happens when I sign up on this page?',
@@ -68,8 +132,9 @@ export const faq = {
 };
 
 export const finalCta = {
-  title: 'Start with the free plan',
-  body: 'Test your next idea on real historical data.',
+  title: 'Your next idea deserves a real test',
+  // A-004: this signup is for this project; the claim about FX Replay's free plan is sourced (A-003).
+  body: "Create a free account for this project. FX Replay's own free plan needs no credit card.",
 };
 
 export const footer = {

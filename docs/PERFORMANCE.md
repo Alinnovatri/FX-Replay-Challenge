@@ -1,27 +1,33 @@
 # Performance review
 
 Measured numbers only. Lab data comes from Lighthouse CI (`pnpm lhci`: mobile form factor, devtools throttling,
-median of 3 runs, both pages), re-run after every change to the page shell; field data does not exist yet.
+median of 3 runs, three pages), re-run after every change to the page shell; field data does not exist yet.
 
-## Core Web Vitals (lab, latest run in Stage 6)
+## Core Web Vitals (lab, latest run in the redesign, 2026-10-24 06:31)
 
-| Metric | Budget | `/` | `/variants/quiz` |
-| --- | --- | --- | --- |
-| Performance score | ≥ 0.90 | 0.99 | 0.99 |
-| Accessibility score | ≥ 0.95 | 1.00 | 1.00 |
-| SEO score | ≥ 0.90 | 1.00 | 1.00 |
-| Largest Contentful Paint | ≤ 2,500 ms | 1,560 ms | 1,557 ms |
-| Cumulative Layout Shift | ≤ 0.10 | 0 | 0 |
-| Total Blocking Time | ≤ 200 ms | 16 ms | 17 ms |
-| HTML (transfer) | ≤ 14,000 B | 7,187 B | 7,505 B |
-| Scripts (transfer) | ≤ 200,000 B | 163,694 B | 165,956 B |
-| Third-party bytes | none | 0 | 0 |
+| Metric | Budget | `/` | `/variants/quiz` | `/variants/control` |
+| --- | --- | --- | --- | --- |
+| Performance score | ≥ 0.90 | 0.99 | 1.00 | 1.00 |
+| Accessibility score | ≥ 0.95 | 1.00 | 1.00 | 1.00 |
+| SEO score | ≥ 0.90 | 1.00 | 1.00 | 1.00 |
+| Largest Contentful Paint | ≤ 2,500 ms | 1,548 ms | 1,537 ms | 1,540 ms |
+| Cumulative Layout Shift | ≤ 0.10 | 0 | 0 | 0 |
+| Total Blocking Time | ≤ 200 ms | 15 ms | 17 ms | 18 ms |
+| HTML (transfer) | ≤ 14,000 B | 11,308 B | 11,521 B | 11,390 B |
+| Scripts (transfer) | ≤ 200,000 B | 163,714 B | 165,999 B | 163,714 B |
+| Third-party bytes | none | 0 | 0 | 0 |
 
-Production, measured with `curl` from the developer machine (one sample, not a benchmark): `/` returned
+**Open risk, LCP outliers:** 2 of these 9 runs measured about 2,690 ms (one on `/`, one on `/variants/control`;
+FCP equal to LCP, so the whole first paint was late). The run before this one failed the LCP gate on `/` with
+3 slow runs in a row, while another `next dev` server was running on the same machine; it was not re-measured
+in isolation, so the cause is inferred, not proven. The redesign raised HTML from about 7.2 KB to 11.3 KB.
+
+Production, measured with `curl` from the developer machine in Stage 8, before the redesign (one sample, not a
+benchmark): `/` returned
 6,383 B compressed with a time to first byte of 0.25 s; static assets are served from the Vercel CDN (`x-vercel-cache: HIT`).
 
 How the numbers moved: Stage 2 skeleton LCP 1,656 ms; Stage 4 signup 1,465 ms; Stage 5 landing 1,540 ms;
-Stage 6 analytics 1,560 ms. INP is not measured in the lab; TBT was at most 21 ms in every logged run.
+Stage 6 analytics 1,560 ms; redesign 1,537 to 1,548 ms. INP is not measured in the lab; TBT was at most 21 ms in every logged run.
 
 ## Performance decisions
 

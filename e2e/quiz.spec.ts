@@ -38,20 +38,25 @@ test('quiz-first: answers first, email last, with progress, back navigation and 
   await page.getByRole('button', { name: 'Continue' }).click();
 
   await expect(progress(page)).toHaveAttribute('aria-valuenow', '3');
-  await expect(page.getByRole('heading', { name: 'Where should we create your free account?' })).toBeFocused();
+  await expect(page.getByRole('heading', { name: 'Who should we create the free account for?' })).toBeFocused();
   await axe(page);
+  await page.getByLabel(/First name/).fill('Quinn');
   await page.getByLabel('Email').fill(uniqueEmail());
   await page.getByRole('button', { name: 'Try FX Replay Free' }).click();
 
   await expect(page.getByRole('heading', { name: 'Your free account is ready' })).toBeFocused();
-  expect(bodies[0]).toMatchObject({ experienceLevel: 'intermediate', markets: ['futures', 'metals'] });
+  expect(bodies[0]).toMatchObject({
+    firstName: 'Quinn',
+    experienceLevel: 'intermediate',
+    markets: ['futures', 'metals'],
+  });
   await expect
     .poll(() => events)
     .toEqual(expect.arrayContaining(['signup_started', 'quiz_step_completed', 'signup_submitted']));
   await expect(page.getByRole('progressbar')).toHaveCount(0);
-  // The answers are already saved, so the profile step only asks for a first name.
+  // Name, level and markets are already saved, so there is no profile step after the quiz.
   await expect(page.getByRole('radio')).toHaveCount(0);
-  await expect(page.getByLabel(/First name/)).toBeVisible();
+  await expect(page.getByLabel(/First name/)).toHaveCount(0);
   await axe(page);
 });
 
@@ -65,13 +70,15 @@ test('quiz-first: skipping markets sends no markets, and Back from the email ste
   await page.getByRole('button', { name: 'Continue' }).click();
   await page.getByRole('button', { name: 'Continue' }).click();
   const email = uniqueEmail();
+  await page.getByLabel(/First name/).fill('Rui');
   await page.getByLabel('Email').fill(email);
   await page.getByRole('button', { name: 'Back' }).click();
   await expect(progress(page)).toHaveAttribute('aria-valuenow', '2');
   await page.getByRole('button', { name: 'Continue' }).click();
   await expect(page.getByLabel('Email')).toHaveValue(email);
+  await expect(page.getByLabel(/First name/)).toHaveValue('Rui');
   await page.getByRole('button', { name: 'Try FX Replay Free' }).click();
   await expect(page.getByRole('heading', { name: 'Your free account is ready' })).toBeVisible();
-  expect(bodies[0]).toMatchObject({ experienceLevel: 'beginner' });
+  expect(bodies[0]).toMatchObject({ firstName: 'Rui', experienceLevel: 'beginner' });
   expect(bodies[0]).not.toHaveProperty('markets');
 });
