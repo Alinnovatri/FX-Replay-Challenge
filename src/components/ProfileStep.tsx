@@ -87,7 +87,7 @@ export function ProfileStep({ userId }: { userId: string }) {
           name="firstName"
           autoComplete="given-name"
           maxLength={50}
-          className="min-h-12 rounded-lg border border-input-border bg-bg-secondary px-4 text-base"
+          className="min-h-12 rounded-lg border border-input-border bg-bg-secondary px-4 text-base focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
         />
       </div>
       <fieldset className="flex flex-col gap-2">
@@ -98,7 +98,7 @@ export function ProfileStep({ userId }: { userId: string }) {
               key={level}
               className="flex min-h-11 cursor-pointer items-center gap-2 rounded-full border border-input-border px-4"
             >
-              <input type="radio" name="experienceLevel" value={level} />
+              <input type="radio" className="accent-link" name="experienceLevel" value={level} />
               {LEVEL_LABELS[level]}
             </label>
           ))}
@@ -112,7 +112,7 @@ export function ProfileStep({ userId }: { userId: string }) {
               key={market}
               className="flex min-h-11 cursor-pointer items-center gap-2 rounded-full border border-input-border px-4"
             >
-              <input type="checkbox" name="markets" value={market} />
+              <input type="checkbox" className="accent-link" name="markets" value={market} />
               {MARKET_LABELS[market]}
             </label>
           ))}
@@ -131,17 +131,18 @@ export function ProfileStep({ userId }: { userId: string }) {
           type="submit"
           aria-disabled={busy || undefined}
           aria-busy={busy || undefined}
-          className="min-h-12 rounded-full bg-btn-primary px-6 font-display font-bold text-btn-text hover:bg-btn-primary-hover"
+          className="min-h-12 rounded-full bg-btn-primary px-6 font-heading font-bold text-btn-text hover:bg-btn-primary-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
         >
           {busy ? 'Saving…' : 'Save profile'}
         </button>
         <button
           type="button"
           onClick={() => {
+            if (inFlight.current) return; // a save is in flight; let it finish
             setStatus('skipped');
             requestAnimationFrame(() => doneRef.current?.focus());
           }}
-          className="min-h-12 rounded-full border border-input-border px-6 font-bold"
+          className="min-h-12 rounded-full border border-input-border px-6 font-bold focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
         >
           Skip for now
         </button>

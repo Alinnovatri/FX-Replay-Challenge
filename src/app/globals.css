@@ -14,8 +14,9 @@
   --color-link: var(--color-blue-400);
   --color-focus: var(--color-blue-400);
   --color-input-border: var(--btn-border-outline);
-  --font-display: var(--font-lato), var(--font-display);
-  --font-body: var(--font-nunito), var(--font-body);
+  /* Distinct names: the generated tokens own --font-display and --font-body. */
+  --font-heading: var(--font-lato), var(--font-display);
+  --font-copy: var(--font-nunito), var(--font-body);
 }
 
 body {
