@@ -68,9 +68,12 @@ export function QuizSignup() {
 
   function submitLevel(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const level = new FormData(event.currentTarget).get('experienceLevel');
+    const form = event.currentTarget;
+    const level = new FormData(form).get('experienceLevel');
     if (!level) {
       setError('Choose the option closest to you.');
+      // Focus the group, as the email form focuses its field, so the error is read where the fix is.
+      form.querySelector<HTMLInputElement>('input[type="radio"]')?.focus();
       return;
     }
     setAnswers((a) => ({ ...a, experienceLevel: level as NonNullable<SignupAnswers['experienceLevel']> }));
