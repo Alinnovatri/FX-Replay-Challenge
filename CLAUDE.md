@@ -22,9 +22,14 @@ Playwright, `@axe-core/playwright`, Lighthouse CI, GitHub Actions, Vercel. Node 
 | Regenerate brand tokens | `node scripts/brand/generate-tokens.mjs` (add `--check` to verify) |
 | Regenerate the contrast report | `node scripts/brand/contrast.mjs` (add `--check` to verify) |
 | Validate the Claude Code config | `node scripts/validate-claude-config.mjs` |
-| Script tests | `node --test scripts/brand/brand.test.mjs scripts/validate-claude-config.test.mjs` |
+| Script tests and config checks | `pnpm check:config` |
+| Dev server (PGlite in `.pglite/`) | `pnpm dev` |
+| Lint, types, unit and integration tests | `pnpm lint`, `pnpm typecheck`, `pnpm test` |
+| Production build, E2E with axe, Lighthouse | `pnpm build`, then `pnpm e2e` and `pnpm lhci` |
+| Smoke a deployment | `BASE_URL=https://<deployment> pnpm smoke` |
+| Generate a migration | `pnpm db:generate` (see the `add-migration` skill) |
 
-App commands (`pnpm dev`, `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm e2e`, `pnpm lhci`) arrive in Stage 2.
+Use `corepack pnpm <script>` where `pnpm` is not on the PATH. The scripts set the env CI uses; see README.
 
 ## Reviews and audits
 

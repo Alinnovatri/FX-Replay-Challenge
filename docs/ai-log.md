@@ -119,3 +119,37 @@ exits 2), expands braces (`.{e,x}nv`, `.e{n,}v`), strips ANSI-C quote markers (`
 names the two accepted false positives (shell text that mentions the name, and `sed 's/.*//'`). The owner
 closed the review loop after this round: the hook is best-effort by design. Tests: 20 of 20 pass, now
 including fail-closed process checks for an invalid glob and an oversized brace expansion.
+
+**End:** 01:16:46, from `date`: 31 min against a 25 min budget.
+
+## Stage 2: Scaffold, CI/CD and walking skeleton (2026-10-24)
+
+**Start:** 01:18:54 (UTC-6), from `date`. Budget raised from 35 to 50 min by the owner ("no cuts").
+
+**Delegated:** the Next.js scaffold, DB layer and first migration, test, E2E and Lighthouse configs, CI and
+security workflows, README, version research (npm publish dates, action SHAs via `git ls-remote`).
+
+**Corrections and judgement calls:**
+
+- `pnpm audit --prod` found two critical RCE advisories in `next@16.4.0`. Claude broke its own two-week
+  version rule to take the patched `next@16.4.2` and `zod@4.6.7`, and recorded why (ADR-009).
+- TypeScript 7.0 was the newest release; Claude chose 5.9.3 because Next 16 support for 7.0 was unverified.
+- `gh api .../commits/<tag>` returned 404 for some tags; SHAs were resolved with `git ls-remote` instead, using
+  the peeled `^{}` commit so annotated tags don't pin a tag object. CodeQL `v4.39.1` was skipped as too new.
+- Lighthouse first ran with the desktop preset; Claude switched to the default mobile profile, which is stricter.
+- markdownlint flagged the delivered `brand/README.md`; it is ignored rather than edited (delivered source).
+- `security-reviewer`: PASS with 6 minors. Fixed: migration errors now log class and SQLSTATE only;
+  `migrate.mjs` refuses Neon outside a Vercel production build; checkout no longer persists credentials;
+  pnpm pinned with its sha512; Dependabot 7-day cooldown. Recorded instead of gated: dev-only advisories.
+  Not done without owner approval: deny rules for `drizzle-kit migrate` (settings change; the migrate guard
+  covers the risk).
+- `code-reviewer`: FAIL (3 major, 7 minor), all fixed: `lhci` and `build` scripts now set the CI env, so the
+  README needs no env prefix; migrate-on-deploy moved into a tested pure function; ai-log and ADR-009 written;
+  script budget set to 200,000 B (the stricter reading of 200 KB); preview database behaviour documented;
+  health endpoint exempted from the error shape in ADR-004; smoke fetches time out after 10 s; test databases
+  are closed; CLAUDE.md commands updated.
+
+**Validation (local, Node 22.23.4):** `pnpm lint` 0 issues; `pnpm typecheck` clean; `pnpm test` 5 of 5;
+`pnpm check:config` 25 of 25; `pnpm e2e` 4 of 4 with 0 axe violations (desktop and mobile); `pnpm lhci` median
+of 3 (mobile, devtools): performance 0.99, accessibility 1, SEO 1, LCP 1656 ms, CLS 0, TBT 18 ms, HTML 2,806 B,
+scripts 137,114 B; `pnpm audit --prod` no known vulnerabilities. Ports 3200 and 3300 checked free afterwards.
