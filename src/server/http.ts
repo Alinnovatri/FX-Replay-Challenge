@@ -78,10 +78,23 @@ export async function readJson(request: Request): Promise<unknown> {
   if (!request.headers.get('content-type')?.toLowerCase().startsWith('application/json')) {
     throw new HttpError(400, 'VALIDATION_FAILED', 'Send a JSON body with Content-Type: application/json');
   }
-  const text = await request.text();
-  if (new TextEncoder().encode(text).byteLength > MAX_BODY_BYTES) {
-    throw new HttpError(400, 'VALIDATION_FAILED', 'Request body is too large');
+  const declared = Number(request.headers.get('content-length') ?? 0);
+  if (declared > MAX_BODY_BYTES) throw new HttpError(400, 'VALIDATION_FAILED', 'Request body is too large');
+  // Read with a byte cap so a body without (or lying about) Content-Length can't fill memory.
+  const chunks: Uint8Array[] = [];
+  let size = 0;
+  const reader = request.body?.getReader();
+  while (reader) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    size += value.byteLength;
+    if (size > MAX_BODY_BYTES) {
+      await reader.cancel();
+      throw new HttpError(400, 'VALIDATION_FAILED', 'Request body is too large');
+    }
+    chunks.push(value);
   }
+  const text = new TextDecoder().decode(Buffer.concat(chunks));
   try {
     return JSON.parse(text);
   } catch {

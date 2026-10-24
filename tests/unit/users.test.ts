@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { closeDbs, freshDb } from '../helpers/db';
+import type { PGlite } from '@electric-sql/pglite';
 import { GET, POST } from '@/app/users/route';
 import { PATCH } from '@/app/users/[id]/route';
 import { setSinkForTests, type ServerEvent } from '@/server/analytics';
@@ -43,8 +44,10 @@ async function signUp(email = 'trader@example.test') {
   return { res, user, cookie: cookieFrom(res) };
 }
 
+let client: PGlite;
+
 beforeEach(async () => {
-  await freshDb();
+  ({ client } = await freshDb());
   events.length = 0;
   setSinkForTests(async (event) => {
     events.push(event);
@@ -101,6 +104,22 @@ describe('POST /users', () => {
     expect(events).toHaveLength(1);
   });
 
+  it('stops replaying, and stops issuing cookies, once the key is older than the cookie lifetime', async () => {
+    const key = crypto.randomUUID();
+    await post({ email: 'old@example.test' }, { 'idempotency-key': key });
+    await client.query(`update idempotency_keys set created_at = now() - interval '31 minutes'`);
+    const res = await post({ email: 'old@example.test' }, { 'idempotency-key': key });
+    expect(res.status).toBe(409);
+    expect((await res.json()).error.code).toBe('EMAIL_TAKEN');
+    expect(res.headers.get('set-cookie')).toBeNull();
+  });
+
+  it('rejects an oversized body', async () => {
+    const res = await post({ email: `${'a'.repeat(10_050)}@example.test` });
+    expect(res.status).toBe(400);
+    expect((await res.json()).error.message).toMatch(/too large/);
+  });
+
   it('returns 409 IDEMPOTENCY_CONFLICT when a key is reused with a different body', async () => {
     const key = crypto.randomUUID();
     await post({ email: 'a@example.test' }, { 'idempotency-key': key });
@@ -145,9 +164,30 @@ describe('GET /users', () => {
     expect(second.nextCursor).toBeNull();
   });
 
-  it('rejects an out-of-range limit and a bad cursor', async () => {
+  it('rejects an out-of-range limit and a bad cursor, including a non-UUID id that Postgres would reject', async () => {
     expect((await list('?limit=101')).status).toBe(400);
     expect((await list('?cursor=garbage')).status).toBe(400);
+    const forged = Buffer.from(JSON.stringify({ createdAt: '2026-10-24 08:00:00.000001+00', id: 'nope' })).toString(
+      'base64url',
+    );
+    expect((await list(`?cursor=${forged}`)).status).toBe(400);
+  });
+
+  it('does not skip rows whose timestamps differ only below the millisecond', async () => {
+    await client.query(`insert into users (email, created_at) values
+      ('a@example.test', '2026-10-24 08:00:00.123400+00'),
+      ('b@example.test', '2026-10-24 08:00:00.123450+00'),
+      ('c@example.test', '2026-10-24 08:00:00.123500+00')`);
+    const seen: string[] = [];
+    let cursor: string | null = null;
+    do {
+      const page: { users: { email: string }[]; nextCursor: string | null } = await (
+        await list(`?limit=1${cursor ? `&cursor=${cursor}` : ''}`)
+      ).json();
+      seen.push(...page.users.map((u) => u.email));
+      cursor = page.nextCursor;
+    } while (cursor);
+    expect(seen).toEqual(['c@example.test', 'b@example.test', 'a@example.test']);
   });
 });
 
@@ -179,6 +219,7 @@ describe('PATCH /users/:id', () => {
     const { user, cookie } = await signUp();
     expect((await patch(user.id, { firstName: 'Ana' })).status).toBe(401);
     expect((await patch(user.id, { firstName: 'Ana' }, { cookie: `${cookie.cookie}x` })).status).toBe(401);
+    expect((await patch(user.id, { firstName: 'Ana' }, { cookie: `${cookie.cookie}.extra` })).status).toBe(401);
     const expired = signProfileToken(user.id, Date.now() - 31 * 60 * 1000);
     expect((await patch(user.id, { firstName: 'Ana' }, { cookie: `${PROFILE_COOKIE}=${expired}` })).status).toBe(401);
   });

@@ -36,11 +36,13 @@ export function signProfileToken(userId: string, now = Date.now()): string {
 /** The user id the token was issued for, or null when it is missing, tampered with or expired. */
 export function verifyProfileToken(token: string | undefined, now = Date.now()): string | null {
   if (!token) return null;
-  const [payload, sig] = token.split('.');
-  if (!payload || !sig) return null;
-  const expected = signature(payload);
-  if (sig.length !== expected.length || !timingSafeEqual(Buffer.from(sig), Buffer.from(expected))) return null;
+  const parts = token.split('.');
+  if (parts.length !== 2 || !parts.every((part) => /^[A-Za-z0-9_-]+$/.test(part))) return null;
+  const [payload, sig] = parts as [string, string];
   try {
+    const given = Buffer.from(sig, 'base64url');
+    const expected = Buffer.from(signature(payload), 'base64url');
+    if (given.length !== expected.length || !timingSafeEqual(given, expected)) return null;
     const { uid, exp } = JSON.parse(Buffer.from(payload, 'base64url').toString()) as { uid?: unknown; exp?: unknown };
     if (typeof uid !== 'string' || typeof exp !== 'number' || exp <= Math.floor(now / 1000)) return null;
     return uid;
