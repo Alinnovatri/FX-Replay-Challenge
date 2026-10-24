@@ -12,7 +12,12 @@ if (!base) {
 
 const email = `smoke+${Date.now()}@example.test`;
 const call = (path, init = {}) =>
-  fetch(new URL(path, base), { ...init, signal: AbortSignal.timeout(10_000) }).then(async (res) => ({
+  fetch(new URL(path, base), {
+    ...init,
+    // Tagged as test traffic (docs/ANALYTICS.md); the emails also use the reserved example.test domain.
+    headers: { 'x-fxr-test': '1', ...init.headers },
+    signal: AbortSignal.timeout(10_000),
+  }).then(async (res) => ({
     res,
     body: res.headers.get('content-type')?.includes('json') ? await res.json() : await res.text(),
   }));
