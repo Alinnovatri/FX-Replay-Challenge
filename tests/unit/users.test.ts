@@ -72,6 +72,13 @@ describe('POST /users', () => {
     expect(events).toEqual([{ name: 'user_signed_up', userId: user.id }]);
   });
 
+  it('saves quiz answers sent with the signup', async () => {
+    const res = await post({ email: 'quiz@example.test', experienceLevel: 'beginner', markets: ['forex', 'metals'] });
+    expect(res.status).toBe(201);
+    expect((await res.json()).user).toMatchObject({ experienceLevel: 'beginner', markets: ['forex', 'metals'] });
+    expect((await post({ email: 'bad@example.test', experienceLevel: 'expert' })).status).toBe(400);
+  });
+
   it('returns 409 EMAIL_TAKEN for a duplicate, case-insensitively, without a second event', async () => {
     await post({ email: 'dup@example.test' });
     const res = await post({ email: 'DUP@example.test' });
