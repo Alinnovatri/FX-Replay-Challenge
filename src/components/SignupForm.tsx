@@ -54,17 +54,22 @@ export function SignupForm({
   answers,
   onBack,
   initialEmail = '',
+  initialName = '',
+  onNameChange,
   onEmailChange,
   onSuccess,
 }: {
   answers?: SignupAnswers;
   onBack?: () => void;
   initialEmail?: string;
+  initialName?: string;
+  onNameChange?: (name: string) => void;
   onEmailChange?: (email: string) => void;
   onSuccess?: () => void;
 } = {}) {
-  const ids = { email: useId(), error: useId(), status: useId(), note: useId() };
+  const ids = { name: useId(), email: useId(), error: useId(), status: useId(), note: useId() };
   const [email, setEmail] = useState(initialEmail);
+  const [firstName, setFirstName] = useState(initialName);
   const [fieldError, setFieldError] = useState<string | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
   const [status, setStatus] = useState<Status>('idle');
@@ -95,7 +100,8 @@ export function SignupForm({
     }
     track('signup_submitted', {});
     const normalised = email.trim().toLowerCase();
-    const fingerprint = JSON.stringify({ email: normalised, answers });
+    const name = firstName.trim();
+    const fingerprint = JSON.stringify({ email: normalised, answers, name });
     if (attempt.current?.fingerprint !== fingerprint) attempt.current = { fingerprint, key: crypto.randomUUID() };
 
     inFlight.current = true;
@@ -103,7 +109,7 @@ export function SignupForm({
     setFieldError(null);
     setFormError(null);
     setFocusTarget(null);
-    const result = await createUser(normalised, attempt.current.key, answers);
+    const result = await createUser(normalised, attempt.current.key, answers, name);
     inFlight.current = false;
 
     if (result.ok) {
@@ -142,7 +148,8 @@ export function SignupForm({
           This account was created for the FX Replay Growth Engineer challenge. It does not sign you in to the FX Replay
           app.
         </p>
-        <ProfileStep userId={user.id} {...(answers ? { only: 'firstName' as const } : {})} />
+        {/* The quiz already collected level and markets; the control asks for them here, optionally. */}
+        {answers ? null : <ProfileStep userId={user.id} />}
       </section>
     );
   }
@@ -150,6 +157,21 @@ export function SignupForm({
   const busy = status === 'submitting';
   return (
     <form onSubmit={submit} noValidate aria-describedby={ids.note} className="flex w-full max-w-md flex-col gap-3">
+      <label htmlFor={ids.name} className="font-heading font-bold">
+        First name <span className="font-body font-normal text-text-secondary">(optional)</span>
+      </label>
+      <input
+        id={ids.name}
+        name="firstName"
+        autoComplete="given-name"
+        maxLength={50}
+        value={firstName}
+        onChange={(e) => {
+          setFirstName(e.target.value);
+          onNameChange?.(e.target.value);
+        }}
+        className="mb-2 min-h-12 rounded-lg border border-input-border bg-bg-secondary px-4 text-base text-text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+      />
       <label htmlFor={ids.email} className="font-heading font-bold">
         Email
       </label>
