@@ -9,12 +9,38 @@
   --color-btn-primary: var(--btn-bg-primary-active);
   --color-btn-primary-hover: var(--btn-bg-primary-hover);
   --color-btn-text: var(--btn-text);
-  --font-display: var(--font-lato), var(--font-display);
-  --font-body: var(--font-nunito), var(--font-body);
+  /* ADR-005 contrast deviations: kit tokens that miss WCAG AA are replaced with existing primitives. */
+  --color-error-text: var(--text-error);
+  --color-link: var(--color-blue-400);
+  --color-focus: var(--color-blue-400);
+  --color-input-border: var(--btn-border-outline);
+  /* Distinct names: the generated tokens own --font-display and --font-body. */
+  --font-heading: var(--font-lato), var(--font-display);
+  --font-copy: var(--font-nunito), var(--font-body);
 }
 
 body {
   background: var(--bg-primary);
   color: var(--text-primary);
   font-family: var(--font-nunito), var(--font-body);
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Error state is shown by text and icon as well as this border, never by color alone. */
+input[aria-invalid='true'] {
+  border-color: var(--text-error);
 }

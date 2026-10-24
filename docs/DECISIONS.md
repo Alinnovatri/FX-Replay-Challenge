@@ -112,7 +112,8 @@ existing primitive instead, never a new color:
 | --- | --- | --- |
 | `text-brand` (`blue-600`) for body text and links | 4.02:1 on `bg-primary` | `blue-400` (7.00:1); `blue-600` only for fills, large text and borders |
 | `border-primary` to `border-tertiary` for input boundaries | 1.19 to 1.81:1 | `btn-border-outline` (`dark-200`, 3.81:1) for form controls |
-| `border-error` | 2.46:1 | Error state shown by text and icon as well as border; border uses a primitive that reaches 3:1, chosen in Stage 4 |
+| `border-error` | 2.46:1 | Error state shown by text and icon as well as the border; the border uses `text-error` (`#F8D7DA`, 15.44:1 on `bg-primary`) |
+| Focus outline (no kit token) | n/a | `blue-400` (7.00:1 on `bg-primary`), the same primitive as links |
 | `banner-color-paragraph` on warning and success banners | 2.67 and 2.36:1 | Dark text on those banners, or the light variants, chosen when a banner is built |
 
 The brief invites evolving the visual direction; these changes are that evolution, and each is visible in
@@ -204,3 +205,32 @@ symlink to `docs/PRODUCT_CONTEXT.md`, so there is one context document.
   `extract-zip`, `basic-ftp` through Lighthouse CI's browser tooling, `markdown-it` through markdownlint,
   `esbuild` dev server through drizzle-kit). None ships to production or runs a server reachable from outside;
   CI gates production dependencies only. Dependabot proposes updates with a 7-day cooldown.
+
+## ADR-010: Signup flow
+
+**Status:** accepted (2026-10-24, Stage 4).
+
+- One field, the email, then an optional profile step, matching FX Replay's own email-only signup and owner
+  decision 9 (no password). The `signup` skill audit drove the details: a visible label (no placeholder-only
+  label), `type=email`, `autocomplete=email` and `inputmode=email`, "Free plan. No credit card required."
+  next to the button (A-003), the form keeps its value on error, and "Skip for now" on the profile step.
+  Deferred: email typo suggestions and Google sign-in.
+- Validation uses the shared `createUserSchema` on blur and on submit; server field errors are shown on the field.
+- Double-submit guard: a `useRef` flag ignores submits while a request is in flight. The button uses
+  `aria-disabled` and `aria-busy` rather than `disabled`, so it keeps focus and is announced as busy.
+- Timeout: 10 s through `setTimeout` and `AbortController` (testable with Playwright's clock). Each signup
+  attempt has one `Idempotency-Key`, reused by "Try again" and replaced only when the email changes, so a
+  retry after a timeout can't create a second account.
+- Focus: to the field on field errors, to the form error on server or network errors, and to the success
+  heading on success. Messages use a `role="alert"` field error and an `aria-live` form error, with an icon and
+  text, never color alone.
+- The conversion stays server-side (`user_signed_up` in `POST /users`); the browser sends no analytics yet
+  (Stage 6).
+- E2E runs against the production build with a freshly migrated PGlite folder and fake test secrets.
+  `localhost` is a secure context, so the `__Host-` cookie works over http in tests. The mobile project runs at
+  360 px, the smallest width the brief requires.
+- Focus is moved in `useEffect` after React commits the new state (an earlier `requestAnimationFrame` version
+  was flaky). "Try again" moves focus to the submit button before it unmounts, and a visually hidden
+  `role="status"` announces "Creating your account…".
+- Target size: every control is at least 44 px tall. The Terms and Privacy links are inline in a sentence and
+  stay at text height, which WCAG 2.5.8 allows; this is a recorded exception to the project's 44 px rule.

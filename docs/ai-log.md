@@ -243,4 +243,59 @@ loudly). `pnpm typecheck` clean, `pnpm lint` 0 issues, `pnpm build` lists `/user
 - Process note: the owner's first two attempts ran from the chat's `!` input, which has no TTY (so `read -rs`
   read nothing) and would have put the output in the conversation. Instructions now say "your own terminal".
 
-**End:** recorded in the stage report from `date`.
+**End:** 02:46:27, from `date`: 24 min against a 35 min budget.
+
+## Stage 4: Signup flow (2026-10-24)
+
+**Start:** 02:49:44 (UTC-6), from `date`.
+
+**Delegated:** the `signup` skill audit, the form and profile step, the browser API client, 18 new E2E tests
+(9 scenarios on desktop and mobile).
+
+**Corrections and judgement calls:**
+
+- First timeout design used `AbortSignal.timeout`, which Playwright's clock can't drive; switched to
+  `setTimeout` with `AbortController` so the timeout test runs in milliseconds instead of waiting 10 s.
+- 4 E2E tests failed on the first run because Next.js injects its own `role="alert"` route announcer; the
+  selector was scoped to the form. The `__Host-` cookie worked on `http://localhost` as expected.
+- The env-guard hook blocked two shell commands containing the header name in brackets (an invalid glob range
+  once quotes are stripped); the files were written with the Write and Edit tools instead. Same accepted
+  false-positive class as in Stage 2.
+
+**Validation:** `pnpm e2e` 22 of 22 (desktop and mobile), axe 0 violations in idle, validation error, 409,
+server error, success and profile-saved states; `pnpm test` 26 of 26; `pnpm lint` 0 issues; `pnpm typecheck`
+clean; `pnpm lhci` medians (mobile, devtools): performance 1, accessibility 1, SEO 1, LCP 1465 ms, CLS 0,
+TBT 21 ms, HTML 3,473 B, scripts 156,971 B. Ports 3200 and 3300 free afterwards.
+
+**Reviews:**
+
+- `brand-copy-reviewer`: FAIL. Blocker: the Terms and Privacy URLs and the notice wording had no sourced
+  entry in A-003 (they were only in QUESTIONS). Fixed: A-003 rows with the verbatim notice and both URLs; the
+  form uses that notice in the second person; the "walking skeleton" line visible to production traffic was
+  replaced with a sourced value line; the timeout message now states the real guarantee ("Trying again won't
+  create a second account"); ADR-005 rows for the error border and the focus color; focus rings and accent
+  color on the profile controls; theme font aliases renamed so they no longer shadow the generated tokens.
+- `code-reviewer`: FAIL. Major: Claude's reduced-motion test could not fail (the button has no transition).
+  Replaced with a test on `scroll-behavior` that is `smooth` by default and `auto` under reduce. Minors fixed:
+  "Skip" ignored during a save; a 2xx without a user is no longer a success; `IDEMPOTENCY_CONFLICT` resets the
+  key; the server stores the replay record before tracking and a racing retry waits up to 600 ms for it; 7
+  unit tests for the browser client (non-JSON 502, empty 2xx, network failure, timeout, header).
+
+**Validation after fixes:** `pnpm test` 33 of 33; `pnpm e2e` 22 of 22; `pnpm typecheck` clean; `pnpm lint`
+0 issues.
+
+- `qa-a11y-tester`: PASS (axe 0 in every state at 360 and 1440 px, tested by hand with its own server) with 8
+  minors. Fixed: "Try again" unmounted the focused button and dropped focus to `<body>` (now focus moves to the
+  submit button first); the busy state is announced through `role="status"`; the error is no longer both
+  focused and in a live region (read twice); focus targets show a ring; the mobile project runs at 360 px; E2E
+  now asserts focus on errors and success, runs axe in timeout and network states, tabs for real in the
+  keyboard test, and covers network failure and the empty email. Recorded instead: inline legal links below
+  44 px (WCAG 2.5.8 exception). Not covered by E2E, verified by hand by the agent: profile 500 and 401, skip
+  while saving.
+- Flakiness Claude introduced and caught: the new network test failed 1 run in 3 because focus was moved in
+  `requestAnimationFrame`, racing React's commit; moved to `useEffect`, then 3 of 3 full runs passed. A unit
+  test (pagination) also failed once because back-to-back inserts can share `created_at`; it now inserts
+  explicit timestamps. markdownlint started linting Playwright's report folder; reports are now ignored.
+
+**Validation (final):** `pnpm e2e` 26 of 26, three consecutive runs; `pnpm test` 33 of 33, three consecutive
+runs; `pnpm lint` 0 issues; `pnpm typecheck` clean. Ports 3200 free.

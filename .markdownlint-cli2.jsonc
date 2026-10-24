@@ -17,5 +17,8 @@
     "private/**",
     "brand/README.md",
     ".next/**",
+    "playwright-report/**",
+    "test-results/**",
+    ".lighthouseci/**",
   ],
 }
