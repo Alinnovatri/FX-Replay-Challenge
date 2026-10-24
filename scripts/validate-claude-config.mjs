@@ -99,7 +99,7 @@ export function checkSettings(root) {
   for (const rule of allow) if (deny.includes(rule)) problems.push(`settings: "${rule}" is both allowed and denied`);
   for (const rule of allow.filter((r) => r.startsWith('mcp__'))) {
     const rest = rule.slice('mcp__'.length);
-    if (!rest.includes('__') || rest.endsWith('__*')) problems.push(`settings: "${rule}" allows a whole MCP server; allow tools by exact name`);
+    if (!rest.includes('__') || rule.includes('*')) problems.push(`settings: "${rule}" allows more than one MCP tool; allow tools by exact name`);
   }
 
   for (const [event, groups] of Object.entries(settings.hooks ?? {})) {

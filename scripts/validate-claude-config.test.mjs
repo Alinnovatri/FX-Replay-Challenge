@@ -92,11 +92,12 @@ test('NotebookEdit on a reviewer and a server-wide MCP allow are reported', (t) 
   const dir = fixture(t);
   writeFileSync(join(dir, '.claude/agents/code-reviewer.md'), '---\nname: code-reviewer\ndescription: x\ntools: Read, NotebookEdit\n---\nVerdict: PASS | FAIL\n');
   const settings = JSON.parse(readFileSync(join(dir, '.claude/settings.json'), 'utf8'));
-  settings.permissions.allow.push('mcp__my_server');
+  settings.permissions.allow.push('mcp__my_server', 'mcp__playwright__browser_*');
   writeFileSync(join(dir, '.claude/settings.json'), JSON.stringify(settings));
   const problems = validate(dir);
   assert.ok(problems.some((p) => p.includes('must not have edit tools')));
-  assert.ok(problems.some((p) => p.includes('"mcp__my_server" allows a whole MCP server')));
+  assert.ok(problems.some((p) => p.includes('"mcp__my_server" allows more than one MCP tool')));
+  assert.ok(problems.some((p) => p.includes('"mcp__playwright__browser_*" allows more than one MCP tool')));
 });
 
 // Built at runtime so this file's own text never names a secret file literally.
@@ -119,10 +120,24 @@ test('env-guard blocks .env files and allows .env.example', () => {
     { tool_name: 'Grep', tool_input: { pattern: 'KEY', glob: `${E}*` } },
     { tool_name: 'Glob', tool_input: { pattern: `**/${E}*` } },
     { tool_name: 'mcp__playwright__browser_navigate', tool_input: { url: `file:///repo/${E}.local` } },
+    { tool_name: 'mcp__playwright__browser_navigate', tool_input: { url: 'file:///repo/%2Eenv.local' } },
+    { tool_name: 'mcp__playwright__browser_navigate', tool_input: { url: 'file:///repo/%E0%A4%A' } },
+    { tool_name: 'Bash', tool_input: { command: 'cat .*' } },
+    { tool_name: 'Bash', tool_input: { command: 'cat .e*' } },
+    { tool_name: 'Bash', tool_input: { command: 'cat .[e]nv' } },
+    { tool_name: 'Bash', tool_input: { command: 'cat ?env' } },
+    { tool_name: 'Bash', tool_input: { command: "cat .e''nv" } },
+    { tool_name: 'Bash', tool_input: { command: 'cat .e\\nv' } },
+    { tool_name: 'Glob', tool_input: { pattern: '.e*' } },
+    { tool_name: 'Grep', tool_input: { pattern: 'KEY', glob: '.*' } },
   ];
   const allowed = [
     { tool_name: 'Read', tool_input: { file_path: `/repo/${E}.example` } },
     { tool_name: 'Bash', tool_input: { command: `cp ${E}.example /tmp/x` } },
+    { tool_name: 'Bash', tool_input: { command: 'ls *' } },
+    { tool_name: 'Glob', tool_input: { pattern: '**/*.ts' } },
+    { tool_name: 'Grep', tool_input: { pattern: `\\${E}` } },
+    { tool_name: 'Read', tool_input: { file_path: '/repo/.gitignore' } },
     { tool_name: 'Read', tool_input: { file_path: '/repo/src/environment.ts' } },
     { tool_name: 'Bash', tool_input: { command: 'git status' } },
   ];
