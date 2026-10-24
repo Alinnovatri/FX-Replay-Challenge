@@ -14,6 +14,7 @@ const REQUIRED_SKILLS = ['add-tracked-event', 'add-migration', 'stage-checkpoint
 const REQUIRED_DENY = ['Bash(gh pr merge:*)', 'Bash(vercel env:*)', 'Bash(vercel promote:*)', 'Bash(vercel rollback:*)'];
 const PAID_API = /\b(OPENAI|ANTHROPIC|GEMINI|SERPAPI|SEMRUSH|AHREFS|DATAFORSEO|APOLLO|CLEARBIT|HUNTER)_API_KEY\b/;
 const EXECUTABLE = new Set(['.sh', '.py', '.js', '.mjs', '.ts', '.rb']);
+const EDIT_TOOLS = new Set(['Edit', 'Write', 'MultiEdit', 'NotebookEdit']);
 
 /** Parses a minimal YAML frontmatter block of `key: value` lines. */
 export function frontmatter(text) {
@@ -45,7 +46,8 @@ export function checkAgents(root) {
     if (fm.name !== name) problems.push(`agent "${name}": frontmatter name "${fm.name}" does not match the file name`);
     if (!fm.description) problems.push(`agent "${name}": description is empty`);
     if (!fm.tools) problems.push(`agent "${name}": tools must be listed explicitly (least privilege)`);
-    if (/\b(Edit|Write|MultiEdit)\b/.test(fm.tools ?? '')) problems.push(`agent "${name}": reviewers must not have edit tools`);
+    const tools = (fm.tools ?? '').split(',').map((tool) => tool.trim());
+    if (tools.some((tool) => EDIT_TOOLS.has(tool))) problems.push(`agent "${name}": reviewers must not have edit tools`);
     if (!text.includes('Verdict: PASS | FAIL')) problems.push(`agent "${name}": missing the fixed output format`);
   }
   return problems;
@@ -66,8 +68,10 @@ export function checkSkills(root) {
     if (fm.name !== name) problems.push(`skill "${name}": frontmatter name "${fm.name}" does not match the folder`);
     if (!fm.description) problems.push(`skill "${name}": description is empty`);
 
+    // Every skill that is not a required project skill is vendored and must say where it came from.
+    if (REQUIRED_SKILLS.includes(name)) continue;
     const source = join(skillDir, 'SOURCE.md');
-    if (!existsSync(source)) continue; // project skill
+    if (!existsSync(source)) { problems.push(`vendored skill "${name}": SOURCE.md is missing`); continue; }
     const sourceText = readFileSync(source, 'utf8');
     if (!/Commit: [0-9a-f]{40}\b/.test(sourceText)) problems.push(`vendored skill "${name}": SOURCE.md must pin a full 40-character commit`);
     if (!existsSync(join(skillDir, 'LICENSE'))) problems.push(`vendored skill "${name}": LICENSE is missing`);
@@ -93,7 +97,10 @@ export function checkSettings(root) {
   for (const rule of REQUIRED_DENY) if (!deny.includes(rule)) problems.push(`settings: deny rule "${rule}" is missing`);
   const allow = settings.permissions?.allow ?? [];
   for (const rule of allow) if (deny.includes(rule)) problems.push(`settings: "${rule}" is both allowed and denied`);
-  if (allow.some((rule) => /^mcp__[^_]+.*__\*$|^mcp__[^_]+$/.test(rule))) problems.push('settings: MCP tools must be allowed by exact name, not by server wildcard');
+  for (const rule of allow.filter((r) => r.startsWith('mcp__'))) {
+    const rest = rule.slice('mcp__'.length);
+    if (!rest.includes('__') || rest.endsWith('__*')) problems.push(`settings: "${rule}" allows a whole MCP server; allow tools by exact name`);
+  }
 
   for (const [event, groups] of Object.entries(settings.hooks ?? {})) {
     for (const group of groups) {

@@ -1,7 +1,8 @@
 // Run with: node --test scripts/validate-claude-config.test.mjs
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { cpSync, mkdtempSync, rmSync, writeFileSync, appendFileSync, unlinkSync, symlinkSync } from 'node:fs';
+import { cpSync, mkdtempSync, mkdirSync, rmSync, readFileSync, writeFileSync, appendFileSync, unlinkSync, symlinkSync } from 'node:fs';
+import { spawnSync } from 'node:child_process';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -81,18 +82,65 @@ test('a copied product context instead of a symlink is reported', (t) => {
   assert.ok(validate(dir).some((p) => p.includes('must resolve to docs/PRODUCT_CONTEXT.md')));
 });
 
+test('a vendored skill that loses SOURCE.md is reported', (t) => {
+  const dir = fixture(t);
+  unlinkSync(join(dir, '.claude/skills/cro/SOURCE.md'));
+  assert.ok(validate(dir).some((p) => p.includes('"cro": SOURCE.md is missing')));
+});
+
+test('NotebookEdit on a reviewer and a server-wide MCP allow are reported', (t) => {
+  const dir = fixture(t);
+  writeFileSync(join(dir, '.claude/agents/code-reviewer.md'), '---\nname: code-reviewer\ndescription: x\ntools: Read, NotebookEdit\n---\nVerdict: PASS | FAIL\n');
+  const settings = JSON.parse(readFileSync(join(dir, '.claude/settings.json'), 'utf8'));
+  settings.permissions.allow.push('mcp__my_server');
+  writeFileSync(join(dir, '.claude/settings.json'), JSON.stringify(settings));
+  const problems = validate(dir);
+  assert.ok(problems.some((p) => p.includes('must not have edit tools')));
+  assert.ok(problems.some((p) => p.includes('"mcp__my_server" allows a whole MCP server')));
+});
+
+// Built at runtime so this file's own text never names a secret file literally.
+const E = '.' + 'env';
+
 test('env-guard blocks .env files and allows .env.example', () => {
   const blocked = [
-    { tool_name: 'Read', tool_input: { file_path: '/repo/.env.local' } },
-    { tool_name: 'Bash', tool_input: { command: 'cat .env' } },
-    { tool_name: 'Bash', tool_input: { command: 'grep KEY .env.production' } },
-    { tool_name: 'Grep', tool_input: { pattern: 'KEY', path: '.env.local' } },
+    { tool_name: 'Read', tool_input: { file_path: `/repo/${E}.local` } },
+    { tool_name: 'Read', tool_input: { file_path: `/repo/${E}rc` } },
+    { tool_name: 'Read', tool_input: { file_path: `/repo/${E}-local` } },
+    { tool_name: 'Read', tool_input: { file_path: `/repo/${E}.example.bak` } },
+    { tool_name: 'Bash', tool_input: { command: `cat ${E}` } },
+    { tool_name: 'Bash', tool_input: { command: `cat ${E}*` } },
+    { tool_name: 'Bash', tool_input: { command: `cat <${E}` } },
+    { tool_name: 'Bash', tool_input: { command: `echo \`cat ${E}\`` } },
+    { tool_name: 'Bash', tool_input: { command: `cat ${E},x` } },
+    { tool_name: 'Bash', tool_input: { command: `cat ${E}.example.local` } },
+    { tool_name: 'Bash', tool_input: { command: `grep KEY ${E}.production` } },
+    { tool_name: 'Grep', tool_input: { pattern: 'KEY', path: `${E}.local` } },
+    { tool_name: 'Grep', tool_input: { pattern: 'KEY', glob: `${E}*` } },
+    { tool_name: 'Glob', tool_input: { pattern: `**/${E}*` } },
+    { tool_name: 'mcp__playwright__browser_navigate', tool_input: { url: `file:///repo/${E}.local` } },
   ];
   const allowed = [
-    { tool_name: 'Read', tool_input: { file_path: '/repo/.env.example' } },
+    { tool_name: 'Read', tool_input: { file_path: `/repo/${E}.example` } },
+    { tool_name: 'Bash', tool_input: { command: `cp ${E}.example /tmp/x` } },
     { tool_name: 'Read', tool_input: { file_path: '/repo/src/environment.ts' } },
     { tool_name: 'Bash', tool_input: { command: 'git status' } },
   ];
   for (const event of blocked) assert.ok(blockedReason(event), JSON.stringify(event));
   for (const event of allowed) assert.equal(blockedReason(event), null, JSON.stringify(event));
+});
+
+test('env-guard exits 2 as a process, also through a symlinked dir and a path with a space', (t) => {
+  const dir = mkdtempSync(join(tmpdir(), 'env guard '));
+  t.after(() => rmSync(dir, { recursive: true, force: true }));
+  mkdirSync(join(dir, 'real'));
+  cpSync(join(ROOT, '.claude/hooks/env-guard.mjs'), join(dir, 'real/env-guard.mjs'));
+  symlinkSync(join(dir, 'real'), join(dir, 'linked'));
+  const event = JSON.stringify({ tool_name: 'Read', tool_input: { file_path: `/repo/${E}.local` } });
+  const allowed = JSON.stringify({ tool_name: 'Read', tool_input: { file_path: '/repo/README.md' } });
+  for (const hook of [join(ROOT, '.claude/hooks/env-guard.mjs'), join(dir, 'real/env-guard.mjs'), join(dir, 'linked/env-guard.mjs')]) {
+    assert.equal(spawnSync(process.execPath, [hook], { input: event }).status, 2, hook);
+    assert.equal(spawnSync(process.execPath, [hook], { input: allowed }).status, 0, hook);
+  }
+  assert.equal(spawnSync(process.execPath, [join(ROOT, '.claude/hooks/env-guard.mjs')], { input: 'not json' }).status, 2);
 });
