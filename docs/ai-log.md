@@ -100,3 +100,13 @@ loaded; Vercel and PostHog connectors connected; Supabase disabled. The owner sa
 
 **Validation:** `node --test scripts/validate-claude-config.test.mjs scripts/brand/brand.test.mjs`: 20 of 20
 pass. `node scripts/validate-claude-config.mjs`: valid.
+
+**Second `code-reviewer` pass: FAIL, fixed with the owner's approval.** Globs that don't start with `.env`
+(`.*`, `.e*`, `.[e]nv`), names split by quotes or backslashes (`.e''nv`), percent-encoded URLs and partial MCP
+wildcards (`mcp__playwright__browser_*`) still got through. The hook now strips quotes and backslashes,
+decodes URLs (blocking on decode failure), and tests each glob segment against known secret names; a leading
+`*` is ignored because it doesn't expand to dotfiles. Grep's `pattern` (a content regex) is no longer checked,
+so code can be searched for `.env` references. The hook and ADR-007 now say it is best-effort: text matching
+can't see `grep -r` or shell variables, and the real controls are gitignore plus no production secrets in the
+session. Lesson: Claude wrote the first guard and its tests from the cases it thought of; two adversarial
+review passes found 20 more.

@@ -108,8 +108,11 @@ they are a best-effort layer: they cover `gh pr merge`, the common `git push` fo
 `drizzle-kit push` (direct, `npx` and `pnpm exec`) and production deploys from the Vercel CLI. The real
 controls are branch protection on `main` (a PR is required, also for admins) and the absence of production
 credentials in the session: migrations reach Neon only through migrate-on-deploy, and there is no database MCP.
-Secret files are guarded by the `env-guard` hook, which blocks any path segment starting with `.env` other
-than `.env.example`, plus explicit Read deny rules.
+The `env-guard` hook and the Read deny rules are a best-effort guard for secret files. The hook matches text:
+it decodes URLs, strips quotes and backslashes, and blocks any path segment or glob that could name a `.env`
+file other than `.env.example`. It cannot see a recursive read (`grep -r KEY .`), a shell variable or a
+command substitution. The real controls for secrets are that `.env*` is gitignored and that the session never
+holds production secrets; the hook stops direct and accidental reads.
 
 **Risk:** the PostHog connector authenticates as a project admin. Every call needs the owner's approval; a
 scoped personal API key is the production next step. The connectors are not in the repo, so a reviewer who
