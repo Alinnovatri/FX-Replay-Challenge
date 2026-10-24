@@ -43,9 +43,14 @@ export async function POST(request: Request): Promise<Response> {
     try {
       user = await createUser(input.email);
     } catch (error) {
-      // Two concurrent retries with the same key: the loser replays the winner's stored response.
+      // Two concurrent retries with the same key (for example a client retry after its timeout while the first
+      // request is still running): the loser waits briefly for the winner's stored response and replays it.
       if (key && error instanceof HttpError && error.code === 'EMAIL_TAKEN') {
-        const winner = await findIdempotent(key);
+        let winner = await findIdempotent(key);
+        for (let attempt = 0; !winner && attempt < 3; attempt += 1) {
+          await new Promise((resolve) => setTimeout(resolve, 200));
+          winner = await findIdempotent(key);
+        }
         if (winner && winner.requestHash === hash) {
           return json({ user: winner.body }, winner.status, {
             'set-cookie': profileCookie(winner.userId),
@@ -56,8 +61,8 @@ export async function POST(request: Request): Promise<Response> {
       }
       throw error;
     }
-    // The account exists from here on: count the conversion first, then store the replay record.
-    await track({ name: 'user_signed_up', userId: user.id });
+    // The account exists from here on. Store the replay record first, so a concurrent retry finds it quickly;
+    // a failure there is logged and never blocks the conversion event or the 201.
     if (key) {
       try {
         await rememberIdempotent(key, hash, user);
@@ -66,6 +71,7 @@ export async function POST(request: Request): Promise<Response> {
         logError('idempotency_store_failed', error, requestId);
       }
     }
+    await track({ name: 'user_signed_up', userId: user.id });
     return json({ user }, 201, { 'set-cookie': profileCookie(user.id), location: `/users/${user.id}` });
   });
 }
