@@ -439,3 +439,28 @@ CLS 0, TBT 17 ms, HTML 7,048 B, scripts 163,631 B; `/variants/quiz` 0.99, 1, 1, 
 **Validation after fixes:** `pnpm test` 46 of 46; `pnpm e2e` 48 of 48, two consecutive runs; `pnpm lint` 0
 issues. `pnpm lhci`: `/` 0.99, 1, 1, LCP 1560 ms, CLS 0, TBT 16 ms, HTML 7,187 B, scripts 163,694 B;
 `/variants/quiz` 0.99, 1, 1, LCP 1557 ms, CLS 0, TBT 17 ms, HTML 7,505 B, scripts 165,956 B.
+
+**Production verification (after merging PR #19; the owner set `POSTHOG_PROJECT_KEY` in Vercel):** deployment
+READY. A tagged script (`x-fxr-test: 1`) visited `/` and received the three `__Host-` cookies (assigned arm:
+quiz), sent `landing_viewed` and `cta_clicked` (204 each), a foreign-origin event (403), and signed up
+`smoke+analytics-1792841070@example.test` (201). PostHog SQL through the MCP, last hour, that visitor id:
+`landing_viewed`, `cta_clicked` and `user_signed_up`, all `variant = quiz`, `is_test = true`, the conversion with
+`source = server` and `has_visitor_id = true`, `utm_source = verification` on the relay events. Privacy check on
+all events in the hour: 5 events, 0 containing `@` in their properties (two other `landing_viewed` events came
+from browser visits to the site). Data written to production: test user `smoke+analytics-1792841070@example.test`.
+
+**End:** 05:25:48, from `date`: 35 min (one stage over the 6-hour mark is the owner's decision, below).
+
+## Stage 8: Documentation (2026-10-24)
+
+**Start:** 05:25:48 (UTC-6). **Overrun:** the 6-hour wall-clock budget ended at 05:27:55, during this stage. The
+owner decided at 04:51 to finish Stages 6 and 8 in full past that point; everything from 05:27:55 on is overrun
+and is reported as such in the stage reports.
+
+**Delegated:** ARCHITECTURE (with a Mermaid diagram), SECURITY, PERFORMANCE and AI_WORKFLOW, written from the
+code, the ADRs and this log; README links to every deliverable.
+
+**Validation:** production headers and timing measured with `curl` for PERFORMANCE and SECURITY (HSTS present,
+no CSP or other security headers, `/` 6,383 B compressed, TTFB 0.25 s, CDN `HIT` on static assets); every number
+in PERFORMANCE comes from the Stage 6 Lighthouse run above or earlier entries in this log; one claim in
+AI_WORKFLOW (the Neon branch limit) is marked as inferred, as it was never confirmed inside Neon.
