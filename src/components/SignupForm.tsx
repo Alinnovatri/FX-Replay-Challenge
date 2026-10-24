@@ -44,7 +44,7 @@ function messageFor(result: Exclude<ApiResult<unknown>, { ok: true }>): {
   if (result.error.code === 'IDEMPOTENCY_CONFLICT') return { form: COPY.failed, retry: true, resetKey: true };
   if (result.error.code === 'VALIDATION_FAILED') {
     const email = result.error.fields?.email;
-    // A rejected first name is not an email problem: show the generic form error instead.
+    // A rejected first name is not an email problem: show the first-name form message instead.
     return email ? { field: email, retry: false } : { form: COPY.name, retry: false };
   }
   return { form: COPY.failed, retry: true };
