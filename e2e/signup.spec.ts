@@ -78,7 +78,7 @@ test('a server error offers a retry that succeeds', async ({ page }) => {
   await page.goto('/#signup');
   await emailField(page).fill(uniqueEmail('retry'));
   await submit(page).click();
-  await expect(page.getByText("We couldn't create your account")).toBeVisible();
+  await expect(page.getByText("We couldn't create your account")).toBeFocused();
   await expectNoAxeViolations(page);
   await page.unroute('**/users');
   await page.getByRole('button', { name: 'Try again' }).click();
@@ -97,11 +97,13 @@ test('a timeout offers a retry that reuses the same Idempotency-Key', async ({ p
   await emailField(page).fill(uniqueEmail('timeout'));
   await submit(page).click();
   await expect(submit(page)).toHaveText('Creating your account…');
+  await expect(page.getByRole('status')).toHaveText('Creating your account…');
   await page.clock.fastForward(10_500);
-  await expect(page.getByText('This is taking longer than usual')).toBeVisible();
+  await expect(page.getByText('This is taking longer than usual')).toBeFocused();
+  await expectNoAxeViolations(page);
   hang = false;
   await page.getByRole('button', { name: 'Try again' }).click();
-  await expect(page.getByRole('heading', { name: 'Your free account is ready' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Your free account is ready' })).toBeFocused();
   expect(requests).toHaveLength(2);
   expect(requests[0]?.key).toBeTruthy();
   expect(requests[1]?.key).toBe(requests[0]?.key);
@@ -122,7 +124,9 @@ test('double-clicking submit sends one request', async ({ page }) => {
 
 test('the whole flow works with the keyboard only', async ({ page }) => {
   await page.goto('/');
-  await emailField(page).focus();
+  await page.keyboard.press('Tab'); // the hero CTA link
+  await page.keyboard.press('Tab');
+  await expect(emailField(page)).toBeFocused();
   await page.keyboard.type(uniqueEmail('keyboard'));
   await page.keyboard.press('Enter');
   await expect(page.getByRole('heading', { name: 'Your free account is ready' })).toBeFocused();
@@ -137,4 +141,24 @@ test('reduced motion turns off smooth scrolling, which is on by default', async 
   expect(await scrollBehavior()).toBe('smooth');
   await page.emulateMedia({ reducedMotion: 'reduce' });
   expect(await scrollBehavior()).toBe('auto');
+});
+
+test('a network failure offers a retry, keeping focus on the form', async ({ page }) => {
+  await page.route('**/users', (route) => route.abort('failed'));
+  await page.goto('/#signup');
+  await emailField(page).fill(uniqueEmail('network'));
+  await submit(page).click();
+  await expect(page.getByText("We couldn't create your account")).toBeFocused();
+  await expectNoAxeViolations(page);
+  await page.unroute('**/users');
+  await page.getByRole('button', { name: 'Try again' }).click();
+  await expect(page.locator('body')).not.toBeFocused();
+  await expect(page.getByRole('heading', { name: 'Your free account is ready' })).toBeFocused();
+});
+
+test('an empty email shows the required message', async ({ page }) => {
+  await page.goto('/#signup');
+  await submit(page).click();
+  await expect(page.locator('form [role="alert"]')).toContainText('Enter your email address');
+  await expect(emailField(page)).toBeFocused();
 });
