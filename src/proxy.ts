@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { VARIANTS, type Variant } from '@/contracts/events';
 
-// Experiment assignment and visitor id (ADR-011, docs/EXPERIMENT.md). Runs for the landing page and the variant.
+// Experiment assignment and visitor id (ADR-011, docs/EXPERIMENT.md). Runs for / and the two fixed arm URLs.
 // Cookies (HttpOnly, Secure, __Host- so no sibling subdomain can plant them):
 // - __Host-fxr_aid: a random visitor id that joins client events with the server-side conversion.
 // - __Host-fxr_variant: control or quiz, assigned 50/50 once and kept for 90 days.
@@ -26,8 +26,11 @@ const isVariant = (value: string | null | undefined): value is Variant => VARIAN
 
 export function proxy(request: NextRequest): NextResponse {
   const url = request.nextUrl;
-  const onVariantPage = url.pathname === '/variants/quiz';
-  const override = onVariantPage ? 'quiz' : overridesAllowed() ? url.searchParams.get('fxr_variant') : null;
+  // The fixed QA URLs pin their arm: /variants/quiz and /variants/control.
+  const fixed: Variant | null =
+    url.pathname === '/variants/quiz' ? 'quiz' : url.pathname === '/variants/control' ? 'control' : null;
+  const onVariantPage = fixed !== null;
+  const override = fixed ?? (overridesAllowed() ? url.searchParams.get('fxr_variant') : null);
   const existing = request.cookies.get(VARIANT)?.value;
   const variant: Variant = isVariant(override) ? override : isVariant(existing) ? existing : assignVariant();
 
@@ -43,4 +46,4 @@ export function proxy(request: NextRequest): NextResponse {
   return response;
 }
 
-export const config = { matcher: ['/', '/variants/quiz'] };
+export const config = { matcher: ['/', '/variants/quiz', '/variants/control'] };
