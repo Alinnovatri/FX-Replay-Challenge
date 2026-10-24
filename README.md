@@ -44,7 +44,7 @@ test servers); nothing else is needed.
 | Claude Code config, brand tokens, contrast | `pnpm check:config` | Fails if generated files are stale |
 | Production build | `pnpm build` | Needed before E2E and Lighthouse |
 | E2E with axe (desktop and mobile) | `pnpm e2e` | Starts the built app on port 3200 |
-| Lighthouse CI (median of 3, mobile, devtools throttling) | `DB_DRIVER=pglite PGLITE_DIR=memory:// pnpm lhci` | Starts the built app on port 3300; budgets in `lighthouserc.cjs` |
+| Lighthouse CI (median of 3, mobile, devtools throttling) | `pnpm lhci` | Starts the built app on port 3300; budgets in `lighthouserc.cjs` |
 | Smoke test of a deployment | `BASE_URL=https://<deployment> pnpm smoke` | Read-only; creates no users |
 
 ## Database and migrations

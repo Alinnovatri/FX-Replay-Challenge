@@ -1,10 +1,13 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { freshDb } from '../helpers/db';
+import { closeDbs, freshDb } from '../helpers/db';
 import { GET } from '@/app/api/health/route';
 import { resolveDriver, setDbForTests, type Db } from '@/db/client';
 
 describe('GET /api/health', () => {
-  afterEach(() => vi.restoreAllMocks());
+  afterEach(async () => {
+    vi.restoreAllMocks();
+    await closeDbs();
+  });
 
   it('returns 200 when the database answers', async () => {
     await freshDb();
@@ -35,6 +38,8 @@ describe('resolveDriver', () => {
 });
 
 describe('users schema', () => {
+  afterEach(closeDbs);
+
   it('rejects a duplicate email at the database (SQLSTATE 23505)', async () => {
     const { client } = await freshDb();
     await client.query(`insert into users (email) values ('a@example.test')`);

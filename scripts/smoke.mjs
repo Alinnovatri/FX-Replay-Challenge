@@ -9,14 +9,14 @@ if (!base) {
 
 const checks = [
   async () => {
-    const res = await fetch(new URL('/', base), { redirect: 'manual' });
+    const res = await fetch(new URL('/', base), { redirect: 'manual', signal: AbortSignal.timeout(10_000) });
     const html = await res.text();
     if (res.status !== 200) throw new Error(`GET / returned ${res.status}`);
     if (!html.includes('Try FX Replay Free')) throw new Error('GET / does not contain the primary CTA');
     return `GET / 200 (${Buffer.byteLength(html)} bytes)`;
   },
   async () => {
-    const res = await fetch(new URL('/api/health', base));
+    const res = await fetch(new URL('/api/health', base), { signal: AbortSignal.timeout(10_000) });
     const body = await res.json();
     if (res.status !== 200 || body.db !== 'ok')
       throw new Error(`GET /api/health returned ${res.status} ${JSON.stringify(body)}`);

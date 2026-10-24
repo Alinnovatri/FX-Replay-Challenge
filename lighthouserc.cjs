@@ -18,7 +18,7 @@ module.exports = {
         'cumulative-layout-shift': ['error', { maxNumericValue: 0.1 }],
         'total-blocking-time': ['error', { maxNumericValue: 200 }],
         'resource-summary:document:size': ['error', { maxNumericValue: 14000 }],
-        'resource-summary:script:size': ['error', { maxNumericValue: 204800 }],
+        'resource-summary:script:size': ['error', { maxNumericValue: 200000 }],
       },
     },
     upload: { target: 'filesystem', outputDir: '.lighthouseci' },
