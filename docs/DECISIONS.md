@@ -93,7 +93,9 @@ the contrast report.
 **Status:** accepted (2026-10-24).
 `main` requires a pull request, blocks force pushes and deletion, and applies to admins. No approving review
 is required: there is one maintainer, and a required review would block every merge. Required status checks
-are added in Stage 2, once CI exists. This matches the one-PR-per-stage flow and doesn't slow it down.
+are added in Stage 2, once CI exists. Amended 2026-10-24 (Stage 2): `main` now requires "Lint, typecheck,
+unit tests, config", "Build, E2E with axe, Lighthouse", "CodeQL", "Secrets scan (full history)" and
+"pnpm audit (production deps)", not strict (a branch need not be up to date with `main`). This matches the one-PR-per-stage flow and doesn't slow it down.
 
 ## ADR-007: MCP servers in use
 
@@ -160,6 +162,12 @@ symlink to `docs/PRODUCT_CONTEXT.md`, so there is one context document.
   doesn't, previews share the production database and must never migrate it. Either way, API changes are
   verified by integration tests on PGlite, in CI, and on production after merge, not on previews.
   Migrating per-preview branches is a next step.
+- **Fonts:** self-hosted with `next/font/local` from pinned `@fontsource` packages, because the first
+  production build failed while `next/font/google` fetched Nunito Sans. Lato, used by the `h1` (the LCP
+  element), uses `display: 'optional'`: with `swap`, a late font load re-painted the heading and produced a
+  bimodal LCP (about 1415 ms or 2665 ms) that failed the 2,500 ms gate in the clean-clone test. With
+  `optional`, 9 of 9 runs measured about 1414 ms. Trade-off: on a slow first visit the heading may stay in the
+  fallback font. Nunito Sans (body) keeps `swap`.
 - **Lighthouse:** default mobile form factor (stricter than desktop), devtools throttling, median of 3 runs;
   servers are started with `node node_modules/next/dist/bin/next` so they don't depend on a bare `pnpm`.
 - **Accepted dev-only risk:** a full `pnpm audit` reports high advisories in development tooling (`tmp`,

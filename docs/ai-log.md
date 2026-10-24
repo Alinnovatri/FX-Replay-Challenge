@@ -153,3 +153,40 @@ security workflows, README, version research (npm publish dates, action SHAs via
 `pnpm check:config` 25 of 25; `pnpm e2e` 4 of 4 with 0 axe violations (desktop and mobile); `pnpm lhci` median
 of 3 (mobile, devtools): performance 0.99, accessibility 1, SEO 1, LCP 1656 ms, CLS 0, TBT 18 ms, HTML 2,806 B,
 scripts 137,114 B; `pnpm audit --prod` no known vulnerabilities. Ports 3200 and 3300 checked free afterwards.
+
+**Production verification and what it caught:**
+
+- PR #3 CI: 8 of 8 green. The preview build log showed `VERCEL_ENV=preview; skipping migrations` on Node 22.x.
+- First production build (after merging PR #3): `migrate: applied migrations with neon`, then the build failed
+  inside `next/font/google` fetching Nunito Sans; the same code had built on preview minutes earlier. Fixed in
+  PR #11 with `next/font/local` and pinned `@fontsource` packages, so builds never fetch fonts.
+- Second production build: migrations applied, build completed. `BASE_URL=https://fx-replay-challenge.vercel.app
+  pnpm smoke`: `GET /` 200 with the CTA, `GET /api/health` 200 `db=ok`.
+- Clean clone from GitHub on Node 22.23.4, README commands as written: lint, typecheck, test, check:config,
+  build and e2e pass; `pnpm lhci` failed LCP (median 2665 ms). Repeated runs were bimodal (about 1415 or
+  2665 ms): a late Lato load re-painted the `h1`. Fixed in PR #13 with `display: 'optional'` for Lato; 9 of 9
+  runs then measured about 1414 ms. Lesson: one passing Lighthouse run on the dev machine was not enough
+  evidence; the clean clone caught a flaky gate.
+- `main` now requires the five CI and security checks (ADR-006 amended).
+- Not verified: the preview `/api/health` (previews are behind Vercel deployment protection, and bypassing it
+  means changing protection settings, which the policy denies); runtime logs through the Vercel MCP (its token
+  is not authorised for the `planetario-web` team scope; the read-only Vercel CLI was used for build logs).
+
+**Mistakes in this stage:**
+
+- Claude put `vercel env ls` in the same shell command as the HTTP probes. Listing env vars is a denied
+  category; the auto-mode classifier blocked the whole command and nothing was read. The probes were rerun alone.
+- The env-guard hook blocked a harmless Python one-liner (`r['audits'][...]` looks like an invalid glob once
+  quotes are stripped, and the hook fails closed). The script moved to a file. Accepted false positive.
+- Dependabot opened PRs #4 to #10 and #12 on its first run. None is merged: #12 bumps `react` without
+  `react-dom`, and #6 and #8 bump CodeQL `init` and `analyze` separately. They are reviewed together in Stage 7.
+
+- PR #13's previews failed with `BUILD_FAILED` "Resource provisioning failed" before any build step. The Vercel
+  MCP (after the owner authorised the `planetario-web` team) showed 9 Git branches had built previews since
+  Neon was connected, 7 of them Dependabot's. Inferred cause, not verified in Neon: each preview gets a Neon
+  branch and the Free plan allows 10 per project. With the owner's approval: `vercel.json` disables
+  deployments for `dependabot/**`, Dependabot PRs #4 to #10 and #12 were closed with a comment, and the owner
+  deleted the stale Neon branches. Lesson: enabling Dependabot and per-preview database branches in the same
+  stage multiplied preview resources; the consequence only showed on the next human PR.
+
+**End:** recorded in the stage report from `date`.
