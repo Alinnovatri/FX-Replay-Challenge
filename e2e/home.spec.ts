@@ -125,6 +125,7 @@ test('product screenshots load with explicit sizes and lazy loading below the fo
   const images = page.locator('main img');
   await expect(images).toHaveCount(3);
   for (const img of await images.all()) {
+    await expect(img).toHaveAttribute('loading', 'lazy');
     await img.scrollIntoViewIfNeeded();
     await expect(img).toHaveAttribute('width', /\d+/);
     await expect.poll(() => img.evaluate((el) => (el as HTMLImageElement).naturalWidth)).toBeGreaterThan(0);

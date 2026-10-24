@@ -115,6 +115,28 @@ test('a timeout offers a retry that reuses the same Idempotency-Key', async ({ p
   expect(requests[1]?.key).toBe(requests[0]?.key);
 });
 
+test('changing the name after a timeout starts a new attempt with a new key', async ({ page }) => {
+  await page.clock.install();
+  const requests = trackSignupRequests(page);
+  let hang = true;
+  await page.route('**/users', async (route) => {
+    if (hang) return;
+    await route.continue();
+  });
+  await page.goto('/#signup');
+  await emailField(page).fill(uniqueEmail('rename'));
+  await submit(page).click();
+  await page.clock.fastForward(10_500);
+  await expect(page.getByText('This is taking longer than usual')).toBeFocused();
+  hang = false;
+  await page.getByLabel(/First name/).fill('Bea');
+  await page.getByRole('button', { name: 'Try again' }).click();
+  await expect(page.getByRole('heading', { name: 'Your free account is ready' })).toBeFocused();
+  expect(requests).toHaveLength(2);
+  expect(requests[1]?.key).toBeTruthy();
+  expect(requests[1]?.key).not.toBe(requests[0]?.key);
+});
+
 test('double-clicking submit sends one request', async ({ page }) => {
   const requests = trackSignupRequests(page);
   await page.route('**/users', async (route) => {
@@ -130,7 +152,7 @@ test('double-clicking submit sends one request', async ({ page }) => {
 
 test('the whole flow works with the keyboard only', async ({ page }) => {
   await page.goto('/');
-  // Tab from the top: skip link, header CTA, then the email field in the hero form.
+  // Tab from the top: skip link, header CTA, "See how it works", first name, then the email field.
   for (let i = 0; i < 6 && !(await emailField(page).evaluate((el) => el === document.activeElement)); i += 1) {
     await page.keyboard.press('Tab');
   }

@@ -41,8 +41,11 @@ function messageFor(result: Exclude<ApiResult<unknown>, { ok: true }>): {
   if (result.error.code === 'EMAIL_TAKEN') return { field: COPY.taken, retry: false };
   // The key was used for another body: the retry must start a fresh attempt with a new key.
   if (result.error.code === 'IDEMPOTENCY_CONFLICT') return { form: COPY.failed, retry: true, resetKey: true };
-  if (result.error.code === 'VALIDATION_FAILED')
-    return { field: result.error.fields?.email ?? COPY.invalid, retry: false };
+  if (result.error.code === 'VALIDATION_FAILED') {
+    const email = result.error.fields?.email;
+    // A rejected first name is not an email problem: show the generic form error instead.
+    return email ? { field: email, retry: false } : { form: COPY.failed, retry: false };
+  }
   return { form: COPY.failed, retry: true };
 }
 
