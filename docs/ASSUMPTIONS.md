@@ -33,6 +33,8 @@ Facts we may use in copy, all read on 2026-10-24:
 | Features: Replay mode, trading journal, prop firm simulator, custom indicators, economic calendar, AI analysis | [fxreplay.com](https://fxreplay.com/) |
 | No coding needed; built for manual traders practising execution | [fxreplay.com FAQ](https://fxreplay.com/) |
 | "Over 1 million traders have used it" | [fxreplay.com FAQ](https://fxreplay.com/) |
+| Signup notice, verbatim: "By submitting this form, I confirm that I have read and agree to FX Replay's Terms of Service and Privacy Policy". Our form uses it in the second person | [FX Replay signup](https://app.fxreplay.com/en-US/signup), read 2026-10-24 |
+| Terms of Service URL: `https://fxreplay.com/legal-regulatory/terms-conditions`; Privacy Policy URL: `https://fxreplay.com/legal-regulatory/privacy-policy` | Footer links on [fxreplay.com](https://fxreplay.com/), read 2026-10-24 |
 | Not a broker; educational and backtesting platform only | [fxreplay.com footer disclosure](https://fxreplay.com/) |
 
 Not used: testimonials and their names (the site itself warns they "may not reflect typical results"),
@@ -50,7 +52,8 @@ give. Account access is a documented next step (owner decision 9).
 ## A-005
 
 **Status:** open.
-Signup shows the same notice FX Replay's own signup uses, linking to their Privacy Policy and Terms. We
+Signup shows FX Replay's own signup notice (A-003), adapted to the second person, linking to their Terms of
+Service and Privacy Policy. We
 don't send marketing email, so there is no marketing-consent checkbox. The PostHog project has
 `anonymize_ips` off; Stage 6 turns it on, and analytics carry no PII (CLAUDE.md rule 7). A cookie banner is
 not added because we set no non-essential cookies before consent: the analytics identifier is first-party
