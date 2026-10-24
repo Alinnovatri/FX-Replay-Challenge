@@ -44,7 +44,7 @@ test('the profile step can be skipped', async ({ page }) => {
   await emailField(page).fill(uniqueEmail('skip'));
   await submit(page).click();
   await page.getByRole('button', { name: 'Skip for now' }).click();
-  await expect(page.getByText('No problem. You can add these details later.')).toBeFocused();
+  await expect(page.getByText('No problem. Your account is created.')).toBeFocused();
 });
 
 test('client validation blocks an invalid email without calling the API', async ({ page }) => {
@@ -124,15 +124,17 @@ test('double-clicking submit sends one request', async ({ page }) => {
 
 test('the whole flow works with the keyboard only', async ({ page }) => {
   await page.goto('/');
-  await page.keyboard.press('Tab'); // the hero CTA link
-  await page.keyboard.press('Tab');
+  // Tab from the top: skip link, header CTA, then the email field in the hero form.
+  for (let i = 0; i < 6 && !(await emailField(page).evaluate((el) => el === document.activeElement)); i += 1) {
+    await page.keyboard.press('Tab');
+  }
   await expect(emailField(page)).toBeFocused();
   await page.keyboard.type(uniqueEmail('keyboard'));
   await page.keyboard.press('Enter');
   await expect(page.getByRole('heading', { name: 'Your free account is ready' })).toBeFocused();
   await page.getByRole('button', { name: 'Skip for now' }).focus();
   await page.keyboard.press('Enter');
-  await expect(page.getByText('No problem. You can add these details later.')).toBeFocused();
+  await expect(page.getByText('No problem. Your account is created.')).toBeFocused();
 });
 
 test('reduced motion turns off smooth scrolling, which is on by default', async ({ page }) => {

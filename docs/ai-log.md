@@ -310,3 +310,68 @@ in Stage 5 with an icon generated from the brand isotype.
 Data written to production: test user `smoke+prod-signup-0315@example.test` with a test profile.
 
 **End:** 03:16:41, from `date`: 27 min against a 35 min budget.
+
+## Stage 5: Landing, brand and the quiz-first variant (2026-10-24)
+
+**Start:** 03:20:37 (UTC-6), from `date`. Budget raised from 40 to 55 min by the owner, who added a quiz-first
+signup with a progress bar and more animations to this stage.
+
+**Owner decision:** the owner felt that asking for the email first hurts signups. Claude pointed out that the
+`signup` skill and FX Replay's own signup are email-first and that there was no data either way, and proposed
+building quiz-first as the A/B variant with email-first as control. The owner chose that (ADR-011).
+
+**Delegated:** copy with the `copywriting` skill (Situation A), the `cro` audit, the landing sections, the
+quiz variant, SEO routes, the asset sync script, motion, 16 new E2E tests.
+
+**`cro` audit (applied or recorded):** quick wins already in place: the form is in the hero and visible
+without scrolling at 360 px (E2E asserts it), "Free plan. No credit card required." sits next to the button,
+and the header carries only the logo and one CTA. Test ideas for Stage 6: quiz-first vs email-first (the
+experiment), the proof line next to the button vs under the subtitle, and the headline framed around the
+free plan vs around testing before trusting.
+
+**Corrections and judgement calls:**
+
+- First scroll-driven animation faded sections in with opacity; axe failed color contrast on desktop where a
+  section was half faded. Switched those to transform only; the hero entrance keeps opacity because it ends
+  in 600 ms.
+- First variant page had `noindex`, which cost it 0.69 SEO in Lighthouse and, worse, would have de-indexed
+  `/` once Stage 6 serves the variant there. Removed; the canonical to `/` handles duplication.
+- `next/image` replaced a raw `img` for the logo after the format-lint hook flagged it.
+- The env-guard hook blocked a shell command again (Lighthouse audit names in brackets); the script moved to a
+  file.
+
+**Validation:** `pnpm e2e` 40 of 40, two consecutive runs (landing and quiz on desktop and 360 px mobile, axe
+0 in every tested state, SEO tags and JSON-LD, robots, sitemap, icon and OG image served, reduced motion);
+`pnpm test` 34 of 34; `pnpm check:config` 25 of 25 with the new asset check; `pnpm lint` 0 issues.
+`pnpm lhci` medians (mobile, devtools, 3 runs each): `/` performance 1, accessibility 1, SEO 1, LCP 1540 ms,
+CLS 0, TBT 14 ms, HTML 6,696 B, scripts 163,201 B; `/variants/quiz` 0.99, 1, 1, LCP 1555 ms, CLS 0, TBT 16 ms,
+HTML 6,993 B, scripts 165,249 B. Ports 3200 and 3300 free afterwards.
+
+**Reviews:**
+
+- `perf-seo-auditor`: PASS. All budgets met on both pages; the LCP element is the `h1` in all 6 runs (text,
+  render delay only); no third-party bytes. Minors fixed: reduced motion now also stops the scroll-driven
+  animation; the OG card loads Lato 900 instead of the default font; JSON-LD `url` points at fxreplay.com.
+  Recorded, not done: lazy-preloading the 4 font weights not used above the fold (LCP already 1.5 s), and about
+  55 KiB of unused JS (scripts at 163 KB of 200 KB).
+- `brand-copy-reviewer`: FAIL. Blocker: "does not execute real trades" was read on fxreplay.com in Stage 1 but
+  never recorded in A-003; added with source, plus "prices in USD" for the JSON-LD currency. Majors fixed: the
+  risk disclosure is now linked; JSON-LD `url` is fxreplay.com, not this site; the success state says the
+  account does not sign the user in to the FX Replay app (A-004); removed "You can change this later" and
+  "You can add these details later", which the UI couldn't honour. Minors fixed: missing `bg-tertiary` theme
+  mapping (the progress track had no color), card hover border uses `border-brand`, ADR-005 row extended to
+  card borders, OG colors resolved from semantic tokens, source comments cite recorded paraphrases, a stacked
+  negation and an aphorism in the copy rewritten.
+- `qa-a11y-tester`: FAIL. Majors fixed: reduced motion didn't stop the `view()` timeline animation (a
+  time-based duration has no effect on a scroll timeline; now gated by `prefers-reduced-motion: no-preference`,
+  with an E2E test); Back on step 2 discarded the chosen markets, and Claude's own test hid it by checking a
+  different box afterwards (now saved on Back, and the test asserts Futures stays checked). Minors fixed: Back
+  from step 3 keeps the typed email; reduced motion also zeroes animation delays; the progress bar and step
+  heading disappear after success; step 1 error marks the `radiogroup` invalid and clears on change (ESLint
+  rejected `aria-invalid` on a radio, correctly). Recorded: inline footer and notice links are below 44 px
+  (WCAG 2.5.8 inline exception, ADR-010).
+
+**Validation after fixes:** `pnpm e2e` 42 of 42, two consecutive runs; `pnpm test` 34 of 34; `pnpm check:config`
+25 of 25; `pnpm lint` 0 issues; `pnpm typecheck` clean. `pnpm lhci`: `/` 1, 1, 1, LCP 1535 ms, CLS 0, TBT 18 ms,
+HTML 6,711 B, scripts 163,301 B; `/variants/quiz` 0.99, 1, 1, LCP 1558 ms, CLS 0, TBT 13 ms, HTML 7,032 B,
+scripts 165,458 B.

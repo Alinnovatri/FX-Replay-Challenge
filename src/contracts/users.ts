@@ -13,13 +13,21 @@ export const EXPERIENCE_LEVELS = ['beginner', 'intermediate', 'advanced'] as con
 // Markets FX Replay lists on its site (docs/ASSUMPTIONS.md A-003).
 export const MARKETS = ['forex', 'futures', 'stocks', 'crypto', 'indices', 'metals'] as const;
 
-export const createUserSchema = z.strictObject({ email });
-
 const profileFields = {
   firstName: z.optional(z.string().check(z.trim(), z.minLength(1), z.maxLength(50))),
   experienceLevel: z.optional(z.enum(EXPERIENCE_LEVELS)),
   markets: z.optional(z.array(z.enum(MARKETS)).check(z.maxLength(MARKETS.length))),
 };
+
+/**
+ * Signup. Email is required; the quiz-first variant (ADR-011) also sends the answers it collected before the
+ * email, so they are saved with the account in one request.
+ */
+export const createUserSchema = z.strictObject({
+  email,
+  experienceLevel: profileFields.experienceLevel,
+  markets: profileFields.markets,
+});
 
 /** What the self-service cookie may change. Email is deliberately absent. */
 export const profileUpdateSchema = z.strictObject(profileFields);

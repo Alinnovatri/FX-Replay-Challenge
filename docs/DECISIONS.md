@@ -111,7 +111,7 @@ existing primitive instead, never a new color:
 | Kit token | Problem (measured) | UI uses |
 | --- | --- | --- |
 | `text-brand` (`blue-600`) for body text and links | 4.02:1 on `bg-primary` | `blue-400` (7.00:1); `blue-600` only for fills, large text and borders |
-| `border-primary` to `border-tertiary` for input boundaries | 1.19 to 1.81:1 | `btn-border-outline` (`dark-200`, 3.81:1) for form controls |
+| `border-primary` to `border-tertiary` for input boundaries | 1.19 to 1.81:1 | `btn-border-outline` (`dark-200`, 3.81:1) for form controls, and for card, FAQ and footer borders so every boundary on the page reads the same; card hover uses `border-brand` |
 | `border-error` | 2.46:1 | Error state shown by text and icon as well as the border; the border uses `text-error` (`#F8D7DA`, 15.44:1 on `bg-primary`) |
 | Focus outline (no kit token) | n/a | `blue-400` (7.00:1 on `bg-primary`), the same primitive as links |
 | `banner-color-paragraph` on warning and success banners | 2.67 and 2.36:1 | Dark text on those banners, or the light variants, chosen when a banner is built |
@@ -234,3 +234,40 @@ symlink to `docs/PRODUCT_CONTEXT.md`, so there is one context document.
   `role="status"` announces "Creating your account…".
 - Target size: every control is at least 44 px tall. The Terms and Privacy links are inline in a sentence and
   stay at text height, which WCAG 2.5.8 allows; this is a recorded exception to the project's 44 px rule.
+
+## ADR-011: Quiz-first signup as the experiment variant
+
+**Status:** accepted (2026-10-24, Stage 5; owner decision).
+The owner's hypothesis: asking for the email first doesn't help capture signups; two quick questions first
+(experience level, markets), then the email, with a progress bar, may convert better through progressive
+commitment. The `signup` skill and FX Replay's own signup point the other way (email first), and there is no
+data, so it is tested, not assumed:
+
+- **Control:** email-first (`SignupForm`), served at `/`.
+- **Variant:** quiz-first (`QuizSignup`), a static page at `/variants/quiz`: step 1 experience level (required),
+  step 2 markets (optional), step 3 email. A `role="progressbar"` with "Step n of 3", focus moved to each
+  step's question, Back keeps answers. The answers are sent with `POST /users` (both optional in the contract),
+  so they are saved with the account; the profile step then asks only for a first name.
+- **Conversion stays the same for both:** the server-confirmed `POST /users` (`user_signed_up`). Stage 6 assigns
+  visitors 50/50 on the server and serves the variant at `/` (no client-side flash), with the sample size and
+  decision rules in EXPERIMENT.md.
+- **SEO:** the variant has no `noindex`, because serving it at `/` would then de-index the home page; its
+  canonical is `/`, and both are allowed in `robots.txt`.
+
+## ADR-012: Landing, motion and SEO
+
+**Status:** accepted (2026-10-24, Stage 5).
+
+- Copy lives in `src/content/landing.ts`, drafted with the `copywriting` skill (Situation A) from the
+  BrandScript; every line maps to A-003. The FAQ says plainly that signing up creates an account in this
+  project, not in the FX Replay app (A-004), and the footer paraphrases FX Replay's risk disclosure.
+- The signup form sits in the hero, so the value proposition and the CTA are visible without scrolling.
+- Brand marks are copied from `brand/logos` by `scripts/brand/sync-assets.mjs` (`--check` in `pnpm check:config`);
+  `src/app/icon.svg` comes from the isotype and fixes the favicon 404. The Open Graph image reads colors from
+  `brand/generated/tokens.json`.
+- Motion is CSS only and animates `transform` and `opacity`: a staggered hero entrance (never the `h1`, the LCP
+  element), sections that rise as they scroll in (`animation-timeline: view()`, transform only, because a
+  half-faded section failed axe color contrast), a slow hero glow, button and card micro-interactions, the
+  progress bar and step transitions. `prefers-reduced-motion` turns all of it off.
+- SEO: `metadataBase`, canonical, Open Graph and Twitter cards, a `SoftwareApplication` JSON-LD with the free
+  offer, `robots.txt` (disallows `/users` and `/api/`) and `sitemap.xml`. Lighthouse audits both pages.

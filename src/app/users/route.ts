@@ -41,7 +41,7 @@ export async function POST(request: Request): Promise<Response> {
 
     let user;
     try {
-      user = await createUser(input.email);
+      user = await createUser(input);
     } catch (error) {
       // Two concurrent retries with the same key (for example a client retry after its timeout while the first
       // request is still running): the loser waits briefly for the winner's stored response and replays it.

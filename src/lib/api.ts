@@ -2,6 +2,12 @@
 // HttpOnly cookie that POST /users sets.
 import type { ApiError, User } from '@/contracts/users';
 
+/** Answers the quiz-first variant collects before the email (ADR-011). */
+export interface SignupAnswers {
+  experienceLevel?: User['experienceLevel'] & string;
+  markets?: NonNullable<User['markets']>;
+}
+
 export const REQUEST_TIMEOUT_MS = 10_000;
 
 export type ApiResult<T> =
@@ -49,8 +55,8 @@ async function send<T>(
 }
 
 /** The same idempotency key must be reused for retries of one signup attempt. */
-export const createUser = (email: string, idempotencyKey: string) =>
-  send<{ user: User }>('/users', 'POST', { email }, { 'idempotency-key': idempotencyKey });
+export const createUser = (email: string, idempotencyKey: string, answers: SignupAnswers = {}) =>
+  send<{ user: User }>('/users', 'POST', { email, ...answers }, { 'idempotency-key': idempotencyKey });
 
 export const updateProfile = (id: string, changes: Record<string, unknown>) =>
   send<{ user: User }>(`/users/${id}`, 'PATCH', changes);

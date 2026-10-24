@@ -14,6 +14,7 @@
   --color-link: var(--color-blue-400);
   --color-focus: var(--color-blue-400);
   --color-input-border: var(--btn-border-outline);
+  --color-bg-tertiary: var(--bg-tertiary);
   /* Distinct names: the generated tokens own --font-display and --font-body. */
   --font-heading: var(--font-lato), var(--font-display);
   --font-copy: var(--font-nunito), var(--font-body);
@@ -29,12 +30,121 @@ html {
   scroll-behavior: smooth;
 }
 
+/*
+ * Motion (CSS only, compositor-friendly: transform and opacity). The h1, the LCP element, is never animated.
+ * Everything here is switched off by the prefers-reduced-motion block below.
+ */
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* Hero entrance, staggered with --d. */
+.reveal {
+  animation: fade-up 600ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
+  animation-delay: var(--d, 0ms);
+}
+
+/* Sections rise into place as they scroll into view, where scroll-driven animations are supported. */
+@keyframes rise {
+  from {
+    transform: translateY(32px) scale(0.98);
+  }
+  to {
+    transform: none;
+  }
+}
+/* Only for visitors without a reduced-motion preference: a scroll timeline ignores animation-duration. */
+@media (prefers-reduced-motion: no-preference) {
+  @supports (animation-timeline: view()) {
+    /* Transform only: a half-faded section would fail text contrast while it scrolls in. */
+    .on-scroll {
+      animation: rise linear both;
+      animation-timeline: view();
+      animation-range: entry 0% cover 25%;
+    }
+  }
+}
+
+/* A slow brand glow behind the hero; a static gradient moved with transform, no filters. */
+.hero {
+  isolation: isolate;
+}
+.hero::before {
+  content: '';
+  position: absolute;
+  inset: -20% -10% auto auto;
+  width: 60vmax;
+  height: 60vmax;
+  background: radial-gradient(
+    closest-side,
+    color-mix(in srgb, var(--btn-bg-primary-active) 28%, transparent),
+    transparent
+  );
+  z-index: -1;
+  animation: drift 18s ease-in-out infinite alternate;
+  pointer-events: none;
+}
+
+@keyframes drift {
+  to {
+    transform: translate(-8vmax, 6vmax) scale(1.1);
+  }
+}
+
+/* Micro-interactions on buttons and cards. */
+.lift {
+  transition:
+    transform 160ms ease,
+    background-color 160ms ease,
+    border-color 160ms ease;
+}
+.lift:hover {
+  transform: translateY(-1px);
+}
+.lift:active {
+  transform: translateY(0) scale(0.98);
+}
+.card {
+  transition:
+    transform 200ms ease,
+    border-color 200ms ease;
+}
+.card:hover {
+  transform: translateY(-3px);
+  border-color: var(--border-brand);
+}
+
+/* Signup steps: progress fill and the step that enters. */
+.progress-fill {
+  transform-origin: left;
+  transition: transform 400ms cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+.step-enter {
+  animation: fade-up 300ms ease both;
+}
+
+details[open] .chevron {
+  transform: rotate(45deg);
+}
+.chevron {
+  display: inline-block;
+  transition: transform 200ms ease;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
   *::after {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
+    animation-delay: 0s !important;
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
   }

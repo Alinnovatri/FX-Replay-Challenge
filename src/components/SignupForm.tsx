@@ -2,7 +2,7 @@
 
 import { useEffect, useId, useRef, useState, type FormEvent } from 'react';
 import { createUserSchema } from '@/contracts/users';
-import { createUser, type ApiResult } from '@/lib/api';
+import { createUser, type ApiResult, type SignupAnswers } from '@/lib/api';
 import type { User } from '@/contracts/users';
 import { ProfileStep } from './ProfileStep';
 
@@ -37,16 +37,32 @@ function messageFor(result: Exclude<ApiResult<unknown>, { ok: true }>): {
   return { form: COPY.failed, retry: true };
 }
 
-export function SignupForm() {
+/**
+ * Email signup. Used alone (control) or as the last step of the quiz-first variant, which passes the answers it
+ * collected and a Back handler.
+ */
+export function SignupForm({
+  answers,
+  onBack,
+  initialEmail = '',
+  onEmailChange,
+  onSuccess,
+}: {
+  answers?: SignupAnswers;
+  onBack?: () => void;
+  initialEmail?: string;
+  onEmailChange?: (email: string) => void;
+  onSuccess?: () => void;
+} = {}) {
   const ids = { email: useId(), error: useId(), status: useId(), note: useId() };
-  const [email, setEmail] = useState('');
+  const [email, setEmail] = useState(initialEmail);
   const [fieldError, setFieldError] = useState<string | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
   const [status, setStatus] = useState<Status>('idle');
   const [user, setUser] = useState<User | null>(null);
   const inFlight = useRef(false);
   // One key per signup attempt: a retry after a timeout replays the same request instead of creating twice.
-  const attempt = useRef<{ email: string; key: string } | null>(null);
+  const attempt = useRef<{ fingerprint: string; key: string } | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const submitRef = useRef<HTMLButtonElement>(null);
   const formErrorRef = useRef<HTMLParagraphElement>(null);
@@ -68,19 +84,21 @@ export function SignupForm() {
       return;
     }
     const normalised = email.trim().toLowerCase();
-    if (attempt.current?.email !== normalised) attempt.current = { email: normalised, key: crypto.randomUUID() };
+    const fingerprint = JSON.stringify({ email: normalised, answers });
+    if (attempt.current?.fingerprint !== fingerprint) attempt.current = { fingerprint, key: crypto.randomUUID() };
 
     inFlight.current = true;
     setStatus('submitting');
     setFieldError(null);
     setFormError(null);
     setFocusTarget(null);
-    const result = await createUser(normalised, attempt.current.key);
+    const result = await createUser(normalised, attempt.current.key, answers);
     inFlight.current = false;
 
     if (result.ok) {
       setUser(result.data.user);
       setStatus('success');
+      onSuccess?.();
       setFocusTarget('success');
       return;
     }
@@ -107,7 +125,12 @@ export function SignupForm() {
         >
           Your free account is ready
         </h2>
-        <ProfileStep userId={user.id} />
+        {/* A-004: be clear about what this account is, right after the conversion. */}
+        <p className="text-sm text-text-secondary">
+          This account was created for the FX Replay Growth Engineer challenge. It does not sign you in to the FX Replay
+          app.
+        </p>
+        <ProfileStep userId={user.id} {...(answers ? { only: 'firstName' as const } : {})} />
       </section>
     );
   }
@@ -131,6 +154,7 @@ export function SignupForm() {
         value={email}
         onChange={(e) => {
           setEmail(e.target.value);
+          onEmailChange?.(e.target.value);
           if (fieldError) setFieldError(null);
         }}
         onBlur={() => email && setFieldError(validate(email))}
@@ -146,15 +170,26 @@ export function SignupForm() {
           </>
         ) : null}
       </p>
-      <button
-        ref={submitRef}
-        type="submit"
-        aria-disabled={busy || undefined}
-        aria-busy={busy || undefined}
-        className="min-h-12 rounded-full bg-btn-primary px-6 font-heading font-bold text-btn-text hover:bg-btn-primary-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus aria-disabled:cursor-progress"
-      >
-        {busy ? 'Creating your account…' : 'Try FX Replay Free'}
-      </button>
+      <div className="flex flex-wrap gap-3">
+        {onBack ? (
+          <button
+            type="button"
+            onClick={onBack}
+            className="lift min-h-12 rounded-full border border-input-border px-6 font-bold focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+          >
+            Back
+          </button>
+        ) : null}
+        <button
+          ref={submitRef}
+          type="submit"
+          aria-disabled={busy || undefined}
+          aria-busy={busy || undefined}
+          className="lift grow min-h-12 rounded-full bg-btn-primary px-6 font-heading font-bold text-btn-text hover:bg-btn-primary-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus aria-disabled:cursor-progress"
+        >
+          {busy ? 'Creating your account…' : 'Try FX Replay Free'}
+        </button>
+      </div>
       {/* Announces progress; the visible label change alone isn't announced unless the button has focus. */}
       <p role="status" className="sr-only">
         {busy ? 'Creating your account…' : ''}

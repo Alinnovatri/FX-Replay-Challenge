@@ -1,7 +1,7 @@
 import 'server-only';
 import { createHash } from 'node:crypto';
 import { and, desc, eq, gt, lt, sql } from 'drizzle-orm';
-import type { AdminUpdateInput, User } from '@/contracts/users';
+import type { AdminUpdateInput, CreateUserInput, User } from '@/contracts/users';
 import { getDb } from '@/db/client';
 import { idempotencyKeys, users } from '@/db/schema';
 import { PROFILE_COOKIE_MAX_AGE } from './auth';
@@ -39,9 +39,9 @@ export async function findIdempotent(key: string) {
   return row;
 }
 
-export async function createUser(email: string): Promise<User> {
+export async function createUser(input: CreateUserInput): Promise<User> {
   try {
-    const [row] = await getDb().insert(users).values({ email }).returning();
+    const [row] = await getDb().insert(users).values(input).returning();
     if (!row) throw new Error('insert returned no row');
     return toUser(row);
   } catch (error) {
