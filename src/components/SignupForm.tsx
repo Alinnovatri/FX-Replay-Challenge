@@ -16,6 +16,7 @@ const COPY = {
   taken: 'This email already has an account. Try a different email.',
   timeout: "This is taking longer than usual. Trying again won't create a second account.",
   failed: "We couldn't create your account. Please try again.",
+  name: 'Check your first name and submit again.',
 };
 
 function errorCode(result: Exclude<ApiResult<unknown>, { ok: true }>): (typeof SIGNUP_ERROR_CODES)[number] {
@@ -44,7 +45,7 @@ function messageFor(result: Exclude<ApiResult<unknown>, { ok: true }>): {
   if (result.error.code === 'VALIDATION_FAILED') {
     const email = result.error.fields?.email;
     // A rejected first name is not an email problem: show the generic form error instead.
-    return email ? { field: email, retry: false } : { form: COPY.failed, retry: false };
+    return email ? { field: email, retry: false } : { form: COPY.name, retry: false };
   }
   return { form: COPY.failed, retry: true };
 }

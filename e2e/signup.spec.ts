@@ -91,6 +91,23 @@ test('a server error offers a retry that succeeds', async ({ page }) => {
   await expect(page.getByRole('heading', { name: 'Your free account is ready' })).toBeFocused();
 });
 
+test('a rejected first name shows a form error without a retry button', async ({ page }) => {
+  await page.route('**/users', (route) =>
+    route.fulfill({
+      status: 400,
+      json: { error: { code: 'VALIDATION_FAILED', message: 'x', requestId: 'r', fields: { firstName: 'Too long' } } },
+    }),
+  );
+  await page.goto('/#signup');
+  await page.getByLabel(/First name/).fill('Ana');
+  await emailField(page).fill(uniqueEmail('badname'));
+  await submit(page).click();
+  await expect(page.getByText('Check your first name and submit again.')).toBeFocused();
+  await expect(emailField(page)).not.toHaveAttribute('aria-invalid', 'true');
+  await expect(page.getByRole('button', { name: 'Try again' })).toHaveCount(0);
+  await expectNoAxeViolations(page);
+});
+
 test('a timeout offers a retry that reuses the same Idempotency-Key', async ({ page }) => {
   await page.clock.install();
   const requests = trackSignupRequests(page);
