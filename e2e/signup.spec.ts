@@ -131,9 +131,10 @@ test('the whole flow works with the keyboard only', async ({ page }) => {
   await expect(page.getByText('No problem. You can add these details later.')).toBeFocused();
 });
 
-test('reduced motion disables transitions', async ({ page }) => {
+test('reduced motion turns off smooth scrolling, which is on by default', async ({ page }) => {
+  const scrollBehavior = () => page.evaluate(() => getComputedStyle(document.documentElement).scrollBehavior);
+  await page.goto('/');
+  expect(await scrollBehavior()).toBe('smooth');
   await page.emulateMedia({ reducedMotion: 'reduce' });
-  await page.goto('/#signup');
-  const duration = await submit(page).evaluate((el) => getComputedStyle(el).transitionDuration);
-  expect(parseFloat(duration)).toBeLessThan(0.001);
+  expect(await scrollBehavior()).toBe('auto');
 });
