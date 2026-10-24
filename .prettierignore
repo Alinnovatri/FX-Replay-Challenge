@@ -1,0 +1,15 @@
+.next
+node_modules
+pnpm-lock.yaml
+drizzle
+.lighthouseci
+playwright-report
+test-results
+brand/brand-kit.html
+brand/generated
+docs/brand/CONTRAST.md
+.claude/skills/copywriting
+.claude/skills/cro
+.claude/skills/signup
+.claude/skills/product-marketing
+*.md

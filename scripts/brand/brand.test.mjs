@@ -28,7 +28,10 @@ test('fails loudly on a reference that resolves to nothing', () => {
 });
 
 test('fails when the parsed count disagrees with the README', () => {
-  assert.throws(() => buildTokens(html, readme.replace('**Semantic** (60)', '**Semantic** (61)')), /README declares 61/);
+  assert.throws(
+    () => buildTokens(html, readme.replace('**Semantic** (60)', '**Semantic** (61)')),
+    /README declares 61/,
+  );
 });
 
 test('fails when the translucent override does not match its primitive', () => {
@@ -51,7 +54,9 @@ test('contrast math matches WCAG reference values', () => {
 
 test('the report never renders a bare pipe inside a table cell', () => {
   const tokens = JSON.parse(readFileSync(new URL('../../brand/generated/tokens.json', import.meta.url), 'utf8'));
-  for (const row of renderReport(tokens).split('\n').filter((l) => l.startsWith('|'))) {
+  for (const row of renderReport(tokens)
+    .split('\n')
+    .filter((l) => l.startsWith('|'))) {
     const cells = row.split('|').length;
     assert.ok(cells === 5 || cells === 6, `unexpected column count in: ${row}`);
   }

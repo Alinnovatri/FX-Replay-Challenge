@@ -1,0 +1,21 @@
+{
+  // Table column counts (MD056) and table pipe style (MD055) are the checks the brief calls out.
+  "config": {
+    "default": true,
+    "MD013": false,
+    "MD024": { "siblings_only": true },
+    "MD033": false,
+    "MD041": false,
+  },
+  "globs": ["**/*.md"],
+  "ignores": [
+    "node_modules/**",
+    ".claude/skills/copywriting/**",
+    ".claude/skills/cro/**",
+    ".claude/skills/signup/**",
+    ".claude/skills/product-marketing/**",
+    "private/**",
+    "brand/README.md",
+    ".next/**",
+  ],
+}

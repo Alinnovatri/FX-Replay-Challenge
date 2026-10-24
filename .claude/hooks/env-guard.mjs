@@ -18,8 +18,17 @@ import { fileURLToPath } from 'node:url';
 const FIELDS = ['file_path', 'path', 'pattern', 'glob', 'command', 'notebook_path', 'url'];
 const SEPARATORS = /[\s`<>()=:;,&|{}/]+/;
 const SECRET_NAMES = [
-  '.env', '.envrc', '.env-local', '.env.local', '.env.production', '.env.development', '.env.test', '.env.staging',
-  '.env.production.local', '.env.development.local', '.env.test.local',
+  '.env',
+  '.envrc',
+  '.env-local',
+  '.env.local',
+  '.env.production',
+  '.env.development',
+  '.env.test',
+  '.env.staging',
+  '.env.production.local',
+  '.env.development.local',
+  '.env.test.local',
 ];
 const MAX_EXPANSIONS = 256;
 
@@ -30,7 +39,10 @@ export function expandBraces(token) {
   while (queue.length) {
     const current = queue.shift();
     const match = current.match(/\{([^{}]*,[^{}]*)\}/);
-    if (!match) { results.push(current); continue; }
+    if (!match) {
+      results.push(current);
+      continue;
+    }
     for (const option of match[1].split(',')) {
       queue.push(current.slice(0, match.index) + option + current.slice(match.index + match[0].length));
     }
@@ -48,7 +60,10 @@ function globToRegExp(glob) {
     else if (char === '[') {
       const end = glob.indexOf(']', i + 1);
       if (end === -1) source += '\\[';
-      else { source += `[${glob.slice(i + 1, end).replace(/^!/, '^')}]`; i = end; }
+      else {
+        source += `[${glob.slice(i + 1, end).replace(/^!/, '^')}]`;
+        i = end;
+      }
     } else source += char.replace(/[.+^${}()|\\]/g, '\\$&');
   }
   return new RegExp(`^${source}$`, 'i'); // throws on an invalid class; the caller treats that as a hit
