@@ -136,3 +136,24 @@ symlink to `docs/PRODUCT_CONTEXT.md`, so there is one context document.
 
 **Deferred (budget re-plan):** `ab-testing` (same repo), Anthropic `frontend-design` and Vercel
 `web-design-guidelines`. Stage 5 uses the CLAUDE.md rules and the agents instead; vendoring them is a next step.
+
+## ADR-009: Scaffold, versions and migrate-on-deploy
+
+**Status:** accepted (2026-10-24, Stage 2).
+
+- **Versions:** exact pins published at least two weeks earlier, with one exception: security fixes win.
+  `pnpm audit --prod` reported two critical remote-code-execution advisories and one high advisory in
+  `next@16.4.0`, and one high advisory in `zod@4.6.5`, so the project uses `next@16.4.2` (9 days old) and
+  `zod@4.6.7`. TypeScript stays on 5.9.3: 7.0 is the new native compiler and Next 16 support for it was not
+  verified. pnpm is pinned with its sha512 in `packageManager`, and GitHub Actions are pinned to commit SHAs.
+- **Database driver:** explicit everywhere. On Vercel it is always Neon; elsewhere `DB_DRIVER` must be
+  `pglite` or `neon`, or the app and scripts fail.
+- **Migrate-on-deploy:** `scripts/vercel-build.mjs` runs `scripts/migrate.mjs` only when
+  `VERCEL_ENV=production`, and `migrate.mjs` itself refuses Neon outside a Vercel production build. Preview
+  builds never migrate. Migration errors are logged as error class and SQLSTATE only.
+- **Lighthouse:** default mobile form factor (stricter than desktop), devtools throttling, median of 3 runs;
+  servers are started with `node node_modules/next/dist/bin/next` so they don't depend on a bare `pnpm`.
+- **Accepted dev-only risk:** a full `pnpm audit` reports high advisories in development tooling (`tmp`,
+  `extract-zip`, `basic-ftp` through Lighthouse CI's browser tooling, `markdown-it` through markdownlint,
+  `esbuild` dev server through drizzle-kit). None ships to production or runs a server reachable from outside;
+  CI gates production dependencies only. Dependabot proposes updates with a 7-day cooldown.
