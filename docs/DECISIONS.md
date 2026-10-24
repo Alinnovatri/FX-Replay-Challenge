@@ -1,0 +1,101 @@
+# Decisions
+
+Short ADRs. When a decision changes, its ADR is amended in the same PR, with the date and the reason.
+
+## ADR-001: Stack
+
+**Status:** accepted (2026-10-24). **Context:** small landing, signup and Users API, deployed, ~6 h.
+
+- Next.js (App Router) with strict TypeScript. The landing is static; the API lives in Route Handlers in
+  the same repo, so one deploy covers both.
+- Zod schemas shared by client and server; `zod/mini` for anything shipped to the browser, to keep the
+  script budget (200 KB) safe.
+- Drizzle ORM on Postgres everywhere: PGlite locally and in tests, Neon in production. One SQL dialect
+  means tests exercise the same constraints (unique email, SQLSTATE `23505`) production does.
+- Tailwind with tokens imported from `brand/generated/tokens.css`.
+- Vitest, Playwright, `@axe-core/playwright`, Lighthouse CI; GitHub Actions; Vercel with per-PR previews.
+
+**Consequences:** PGlite and Neon are both Postgres, but the driver differs (embedded vs serverless HTTP).
+The database client is created in one module so tests and production differ only in the driver.
+
+## ADR-002: Node 22.23.4
+
+**Status:** accepted (2026-10-24).
+The owner's machine already runs Node 22.23.4 through nvm, with the Vercel CLI 65.2.0 and `neonctl`
+installed for it. Node 22 is a maintained LTS line until April 2027, after the submission window, and
+Vercel supports `22.x`. Node 24 brings nothing this project needs, and switching would mean reinstalling the
+global CLIs. `.nvmrc` pins `22.23.4`; `package.json` will pin `engines.node` to `22.x` and Vercel to `22.x`.
+The shell's system Node (23.7.0, an odd, unsupported release) is never used.
+
+**Next step:** move to Node 24 LTS before April 2027.
+
+## ADR-003: Analytics through a first-party relay
+
+**Status:** proposed (detailed in Stage 6).
+No PostHog script in the page. The browser sends typed events to a same-origin Route Handler, which
+validates them with the shared Zod schema and forwards them with `posthog-node`. The conversion event is
+captured on the server inside `POST /users`, after the insert commits, so it can't fire on a click or a
+failed request. This keeps third-party JS at zero, avoids ad-blocker loss on the conversion, and gives
+one place to strip PII and tag test traffic.
+
+**Trade-off:** we give up PostHog's autocapture, session replay and client-side flag evaluation. Flags for the
+experiment are evaluated on the server.
+
+## ADR-004: Users API contract
+
+**Status:** proposed (finalised in Stage 3; signup fields refined with the signup skill in Stage 4).
+
+| Endpoint | Auth | Success | Notes |
+| --- | --- | --- | --- |
+| `POST /users` | None | `201` with the user | Body: `email` (required). Optional `Idempotency-Key` header; a replay with the same key and body returns the original `201`. Sets the self-service cookie |
+| `PATCH /users/:id` | Admin token, or the self-service cookie for the same id | `200` with the user | The cookie allows profile fields only, never `email` |
+| `GET /users` | Admin token | `200` with a page of users | Cursor pagination, `limit` at most 100 |
+
+Errors share one shape: `{ "error": { "code", "message", "requestId", "fields"? } }`.
+
+| Status | Code | When |
+| --- | --- | --- |
+| 400 | `VALIDATION_FAILED` | Body or params fail the shared schema; `fields` lists each problem |
+| 401 | `UNAUTHORIZED` | Missing or invalid admin token or cookie |
+| 403 | `FORBIDDEN` | Cookie used for another id or for a non-profile field |
+| 404 | `NOT_FOUND` | No user with that id |
+| 409 | `EMAIL_TAKEN` | The email already exists (unique index, SQLSTATE `23505`) |
+| 409 | `IDEMPOTENCY_CONFLICT` | The same key was reused with a different body |
+| 500 | `INTERNAL` | Anything unexpected; logs record the error class and SQLSTATE only |
+
+The brief names 400/404/409/500; 401 and 403 are added because protected endpoints need them.
+
+**Risk:** a 409 on duplicate email tells a caller that an address is registered (account enumeration).
+The brief requires the 409; rate limiting in Stage 7 limits probing, and the risk is documented in SECURITY.
+
+## ADR-005: Brand tokens and contrast-driven deviations
+
+**Status:** accepted (2026-10-24).
+Tokens are generated from `brand/brand-kit.html` by `scripts/brand/generate-tokens.mjs` (never
+transcribed); `--check` fails when the committed output is stale. `scripts/brand/contrast.mjs` measures
+every relevant pair into [CONTRAST.md](brand/CONTRAST.md). Where a kit token fails WCAG AA, the UI uses an
+existing primitive instead, never a new color:
+
+| Kit token | Problem (measured) | UI uses |
+| --- | --- | --- |
+| `text-brand` (`blue-600`) for body text and links | 4.02:1 on `bg-primary` | `blue-400` (7.00:1); `blue-600` only for fills, large text and borders |
+| `border-primary` to `border-tertiary` for input boundaries | 1.19 to 1.81:1 | `btn-border-outline` (`dark-200`, 3.81:1) for form controls |
+| `border-error` | 2.46:1 | Error state shown by text and icon as well as border; border uses a primitive that reaches 3:1, chosen in Stage 4 |
+| `banner-color-paragraph` on warning and success banners | 2.67 and 2.36:1 | Dark text on those banners, or the light variants, chosen when a banner is built |
+
+The brief invites evolving the visual direction; these changes are that evolution, and each is visible in
+the contrast report.
+
+## ADR-006: Branch protection on main
+
+**Status:** accepted (2026-10-24).
+`main` requires a pull request, blocks force pushes and deletion, and applies to admins. No approving review
+is required: there is one maintainer, and a required review would block every merge. Required status checks
+are added in Stage 2, once CI exists. This matches the one-PR-per-stage flow and doesn't slow it down.
+
+## ADR-007: MCP servers in use
+
+**Status:** proposed (finalised in Stage 1 with `.claude/settings.json`).
+Used: Vercel, PostHog, Playwright. The Supabase connector is disabled (owner, 2026-10-24); the project
+doesn't use Supabase. The PostHog connector currently authenticates as a project admin, which is not least
+privilege; Stage 1 allows named read tools and makes every write tool ask.
