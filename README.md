@@ -46,6 +46,7 @@ test servers); nothing else is needed.
 | E2E with axe (desktop and mobile) | `pnpm e2e` | Starts the built app on port 3200 |
 | Lighthouse CI (median of 3, mobile, devtools throttling) | `pnpm lhci` | Starts the built app on port 3300; budgets in `lighthouserc.cjs` |
 | Smoke test of a deployment | `BASE_URL=https://<deployment> pnpm smoke` | Read-only; creates no users |
+| Users API check of a deployment | `BASE_URL=https://<deployment> node scripts/verify-api.mjs` | Writes one `smoke+<timestamp>@example.test` user; no secrets needed |
 
 ## Users API
 
