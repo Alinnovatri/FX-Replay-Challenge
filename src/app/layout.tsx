@@ -10,7 +10,8 @@ const lato = localFont({
     { path: '../../node_modules/@fontsource/lato/files/lato-latin-900-normal.woff2', weight: '900', style: 'normal' },
   ],
   variable: '--font-lato',
-  display: 'swap',
+  // optional: the h1 (the LCP element) never re-paints when the web font arrives late.
+  display: 'optional',
 });
 const nunito = localFont({
   src: [
