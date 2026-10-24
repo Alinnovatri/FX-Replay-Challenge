@@ -7,7 +7,14 @@ import { track } from '@/lib/track';
 /** Sends landing_viewed once per page load. */
 export function PageView() {
   useEffect(() => {
-    track('landing_viewed', {});
+    let referrer: string | null = null;
+    try {
+      referrer = document.referrer ? new URL(document.referrer).hostname : null;
+    } catch {
+      referrer = null;
+    }
+    // Internal navigations are not attribution.
+    track('landing_viewed', { referrer_domain: referrer === location.hostname ? null : referrer });
   }, []);
   return null;
 }

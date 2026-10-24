@@ -15,9 +15,15 @@ export const SIGNUP_ERROR_CODES = [
   'NETWORK',
 ] as const;
 
+const hostname = z.string().check(z.maxLength(253), z.regex(/^[a-z0-9.-]+$/i));
+
 /** Events the browser may send to POST /api/e. Server-only events (user_signed_up, profile_completed) are not here. */
 export const clientEventSchema = z.discriminatedUnion('name', [
-  z.strictObject({ name: z.literal('landing_viewed'), props: z.strictObject({}) }),
+  z.strictObject({
+    name: z.literal('landing_viewed'),
+    // Hostname of document.referrer only (never the full URL, which can carry personal data); null if none.
+    props: z.strictObject({ referrer_domain: z.nullable(hostname) }),
+  }),
   z.strictObject({ name: z.literal('cta_clicked'), props: z.strictObject({ cta_id: z.enum(CTA_IDS) }) }),
   z.strictObject({ name: z.literal('signup_started'), props: z.strictObject({}) }),
   z.strictObject({ name: z.literal('signup_submitted'), props: z.strictObject({}) }),

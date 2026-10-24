@@ -8,16 +8,6 @@ export const dynamic = 'force-dynamic';
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
-/** Hostname only: full referrer URLs can carry query strings with personal data. */
-function referrerDomain(request: Request): string | null {
-  try {
-    const referrer = request.headers.get('referer');
-    return referrer ? new URL(referrer).hostname : null;
-  } catch {
-    return null;
-  }
-}
-
 function utm(url: URL | null, key: string): string | null {
   const value = url?.searchParams.get(key) ?? undefined;
   const parsed = utmSchema.safeParse(value);
@@ -30,6 +20,11 @@ function utm(url: URL | null, key: string): string | null {
  */
 export async function POST(request: Request): Promise<Response> {
   return handle(async () => {
+    // Same-origin only: browsers send Origin on POST; a foreign one is a cross-site or forged request.
+    const origin = request.headers.get('origin');
+    if (origin && origin !== new URL(request.url).origin) {
+      throw new HttpError(403, 'FORBIDDEN', 'Events are accepted from this site only');
+    }
     const event = parseOr400(clientEventSchema.safeParse(await readJson(request)));
     const aid = readCookie(request, ANON_COOKIE);
     // Without the proxy's anonymous id the event can't join the funnel; reject instead of inventing one.
@@ -51,7 +46,6 @@ export async function POST(request: Request): Promise<Response> {
         is_test: isTestTraffic(request),
         source: 'relay',
         path: landing && landing.origin === new URL(request.url).origin ? landing.pathname : null,
-        referrer_domain: referrerDomain(request),
         utm_source: utm(landing, 'utm_source'),
         utm_medium: utm(landing, 'utm_medium'),
         utm_campaign: utm(landing, 'utm_campaign'),

@@ -41,6 +41,13 @@ export function QuizSignup() {
   const titleRef = useRef<HTMLHeadingElement>(null);
   const moved = useRef(false);
   const started = useRef(false);
+  // Each step is reported once, even if the visitor goes Back and submits it again.
+  const reported = useRef(new Set<number>());
+  const completeStep = (step: 1 | 2) => {
+    if (reported.current.has(step)) return;
+    reported.current.add(step);
+    track('quiz_step_completed', { step });
+  };
   const start = () => {
     if (started.current) return;
     started.current = true;
@@ -66,7 +73,7 @@ export function QuizSignup() {
       return;
     }
     setAnswers((a) => ({ ...a, experienceLevel: level as NonNullable<SignupAnswers['experienceLevel']> }));
-    track('quiz_step_completed', { step: 1 });
+    completeStep(1);
     go(2);
   }
 
@@ -83,7 +90,7 @@ export function QuizSignup() {
   function submitMarkets(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     saveMarkets(new FormData(event.currentTarget));
-    track('quiz_step_completed', { step: 2 });
+    completeStep(2);
     go(3);
   }
 

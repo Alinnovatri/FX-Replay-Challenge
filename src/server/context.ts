@@ -4,9 +4,9 @@ import type { EventContext } from './analytics';
 import { readCookie } from './auth';
 
 // First-party cookies set by src/proxy.ts. Read on the server only (HttpOnly).
-export const ANON_COOKIE = 'fxr_aid';
-export const VARIANT_COOKIE = 'fxr_variant';
-export const TEST_COOKIE = 'fxr_test';
+export const ANON_COOKIE = '__Host-fxr_aid';
+export const VARIANT_COOKIE = '__Host-fxr_variant';
+export const TEST_COOKIE = '__Host-fxr_test';
 export const TEST_HEADER = 'x-fxr-test';
 // Reserved test domain used by smoke, E2E and verification scripts (RFC 2606).
 const TEST_EMAIL_DOMAIN = '@example.test';
@@ -30,8 +30,10 @@ export function isTestTraffic(request: Request, email?: string): boolean {
 /** Context for a server event; falls back to the user id as distinct id when the visitor has no anonymous id. */
 export function eventContext(request: Request, fallbackId: string, email?: string): EventContext {
   const aid = readCookie(request, ANON_COOKIE);
+  const hasVisitorId = Boolean(aid && UUID.test(aid));
   return {
-    distinctId: aid && UUID.test(aid) ? aid : fallbackId,
+    distinctId: hasVisitorId ? (aid as string) : fallbackId,
+    hasVisitorId,
     variant: readVariant(request),
     isTest: isTestTraffic(request, email),
   };
