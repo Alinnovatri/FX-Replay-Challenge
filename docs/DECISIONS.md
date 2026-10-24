@@ -81,10 +81,16 @@ returns `{ status, db }` with 200, or 503 when the database is unreachable (adde
 - Admin token: `Authorization: Bearer <ADMIN_TOKEN>`, compared in constant time over SHA-256 digests. A missing
   `ADMIN_TOKEN` or `SESSION_SECRET` is a 500 whose log names the setting; there is no default.
 - Idempotency: `Idempotency-Key` (UUID) on `POST /users` stores the 201 in `idempotency_keys`. A retry with the
-  same key and body replays it with `Idempotent-Replayed: true` and no second `user_signed_up`. Concurrent
-  retries are resolved by the unique email index: the loser replays the winner's stored response. Neon's HTTP
-  driver has no interactive transactions, so the user insert and the key insert are two statements; a crash
-  between them makes a later retry return 409 `EMAIL_TAKEN` instead of a replay (documented risk).
+  same key and body within 30 minutes (the cookie lifetime) replays it, with `Idempotent-Replayed: true`, the
+  same `Location` and no second `user_signed_up`. After 30 minutes the key is ignored, so it can't keep minting
+  profile cookies; expired keys are pruned. Neon's HTTP driver has no interactive transactions, so the user
+  insert and the key insert are two statements, with two accepted gaps: if storing the key fails, the request
+  still returns 201 and logs `idempotency_store_failed` (a later retry gets 409 `EMAIL_TAKEN`); and when two
+  retries with the same key race, the loser replays the winner's response only if the winner has already
+  stored it, otherwise it gets 409 `EMAIL_TAKEN`. PGlite serialises queries, so the race is not reproduced in
+  tests. Reserving the key before the insert is the next step.
+- Bodies are read with a 10,000-byte cap (declared `Content-Length` or streamed); larger bodies are a 400.
+- A cookie holder sending `email` gets 403 whatever its value; the check runs before validation.
 - A malformed id in `PATCH /users/:id` is a 404, the same as an unknown id.
 - `user_signed_up` is tracked after the insert returns; `profile_completed` after a self-service PATCH.
   Analytics failures are logged and never fail the request.
