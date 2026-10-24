@@ -502,3 +502,7 @@ project); one contrast-reveal title and three minor AI tells; two icons used a p
 ANALYTICS still described the old flow; ADR-013 records the redesign. Two untested behaviours now have e2e
 cases (a name change after a timeout gets a new Idempotency-Key; the quiz keeps the name across Back), the
 screenshot test asserts lazy loading, and a server error on `firstName` no longer shows as an email error.
+
+**Re-review:** `qa-a11y-tester` PASS (built HEAD itself after finding a stale `.next`; 58/58, axe 0);
+`brand-copy-reviewer` PASS; `code-reviewer` FAIL on two untested `SignupForm` changes (form error and hidden
+"Try again" for a rejected first name), now covered by an e2e case with its own message.

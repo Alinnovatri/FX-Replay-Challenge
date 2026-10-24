@@ -22,7 +22,8 @@ FCP equal to LCP, so the whole first paint was late). The run before this one fa
 3 slow runs in a row, while another `next dev` server was running on the same machine; it was not re-measured
 in isolation, so the cause is inferred, not proven. The redesign raised HTML from about 7.2 KB to 11.3 KB.
 
-Production, measured with `curl` from the developer machine (one sample, not a benchmark): `/` returned
+Production, measured with `curl` from the developer machine in Stage 8, before the redesign (one sample, not a
+benchmark): `/` returned
 6,383 B compressed with a time to first byte of 0.25 s; static assets are served from the Vercel CDN (`x-vercel-cache: HIT`).
 
 How the numbers moved: Stage 2 skeleton LCP 1,656 ms; Stage 4 signup 1,465 ms; Stage 5 landing 1,540 ms;
