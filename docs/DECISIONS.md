@@ -109,8 +109,10 @@ they are a best-effort layer: they cover `gh pr merge`, the common `git push` fo
 controls are branch protection on `main` (a PR is required, also for admins) and the absence of production
 credentials in the session: migrations reach Neon only through migrate-on-deploy, and there is no database MCP.
 The `env-guard` hook and the Read deny rules are a best-effort guard for secret files. The hook matches text:
-it decodes URLs, strips quotes and backslashes, and blocks any path segment or glob that could name a `.env`
-file other than `.env.example`. It cannot see a recursive read (`grep -r KEY .`), a shell variable or a
+it decodes URLs, strips quotes, ANSI-C quote markers and backslashes, expands braces, and blocks path segments
+starting with `.env` (except `.env.example`) and globs that match a known secret name. It fails closed: any
+error inside the check blocks the call. Accepted false positives: shell text that mentions `.env`, and regex
+text such as `sed 's/.*//'`, since `.*` is also a glob that expands to dotfiles. It cannot see a recursive read (`grep -r KEY .`), a shell variable or a
 command substitution. The real controls for secrets are that `.env*` is gitignored and that the session never
 holds production secrets; the hook stops direct and accidental reads.
 

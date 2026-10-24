@@ -110,3 +110,12 @@ so code can be searched for `.env` references. The hook and ADR-007 now say it i
 can't see `grep -r` or shell variables, and the real controls are gitignore plus no production secrets in the
 session. Lesson: Claude wrote the first guard and its tests from the cases it thought of; two adversarial
 review passes found 20 more.
+
+**Third `code-reviewer` pass (owner-requested): FAIL, final round applied with the owner's approval.** The
+blocker was serious: an invalid glob such as `[z-a]` made the hook throw and exit 1, and Claude Code only
+blocks on exit 2, so one extra token let any command through. The hook now fails closed (any internal error
+exits 2), expands braces (`.{e,x}nv`, `.e{n,}v`), strips ANSI-C quote markers (`.e$'n'v`), and checks
+`.env.test`, `.env.staging` and the `.local` variants; the root deny list gained the `.env-*` rule; ADR-007
+names the two accepted false positives (shell text that mentions the name, and `sed 's/.*//'`). The owner
+closed the review loop after this round: the hook is best-effort by design. Tests: 20 of 20 pass, now
+including fail-closed process checks for an invalid glob and an oversized brace expansion.
