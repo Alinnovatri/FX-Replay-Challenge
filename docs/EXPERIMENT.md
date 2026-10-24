@@ -72,7 +72,9 @@ pre-launch QA, so internal visits before it never enter the read window), after 
 ## Operating notes
 
 - PostHog: an insight "Signup funnel by variant" built from the funnel in ANALYTICS, `is_test = false`,
-  breakdown `variant`.
+  breakdown `variant`, date range starting at the launch timestamp.
+- **Launch:** TODO(owner): record the UTC launch time here and in `docs/ai-log.md` when real traffic starts.
+  Everything before it (QA, the fixed QA URLs, untagged manual checks) is outside the read window.
 - A change to either arm during the run restarts the count.
 - The experiment flag is the `__Host-fxr_variant` cookie; to end the test, change `assignVariant` to return the winner
   and keep the losing component until the next cleanup.

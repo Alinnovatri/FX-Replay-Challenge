@@ -103,4 +103,4 @@ conversion window of 1 day.
 - **Known limits:** visitors who block cookies get no `__Host-fxr_aid` and their relay events are rejected (the
   conversion is still counted, with the user id as distinct id); clearing cookies starts a new visitor. Bots are
   not filtered beyond PostHog's defaults. A visitor who opens `/variants/quiz` or `/variants/control` directly is moved to
-  that arm (QA links); such links are not published, and `?fxr_variant=` only works outside production.
+  that arm (QA links); such links are not published, visits before the experiment's launch timestamp are outside its read window, and `?fxr_variant=` only works outside production.

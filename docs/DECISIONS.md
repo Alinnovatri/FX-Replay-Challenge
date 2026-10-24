@@ -83,7 +83,8 @@ returns `{ status, db }` with 200, or 503 when the database is unreachable (adde
   Secure, SameSite=Strict, `Path=/` (required by the `__Host-` prefix), `Max-Age=1800`. Missing, tampered or
   expired: 401. Another id, or `email` in the body: 403.
 - Admin token: `Authorization: Bearer <ADMIN_TOKEN>`, compared in constant time over SHA-256 digests. A missing
-  `ADMIN_TOKEN` or `SESSION_SECRET` is a 500 whose log names the setting; there is no default.
+  `ADMIN_TOKEN` or `SESSION_SECRET` is a 500 whose log names the setting; there is no default on Vercel or in
+  tests (`pnpm dev` sets visible local-only placeholders, Stage 9). `POST /users` checks the secret before writing.
 - Idempotency: `Idempotency-Key` (UUID) on `POST /users` stores the 201 in `idempotency_keys`. A retry with the
   same key and body within 30 minutes (the cookie lifetime) replays it, with `Idempotent-Replayed: true`, the
   same `Location` and no second `user_signed_up`. After 30 minutes the key is ignored, so it can't keep minting
@@ -217,8 +218,9 @@ symlink to `docs/PRODUCT_CONTEXT.md`, so there is one context document.
 
 - One required field, the email (plus an optional first name since ADR-013), then an optional profile step, matching FX Replay's own email-only signup and owner
   decision 9 (no password). The `signup` skill audit drove the details: a visible label (no placeholder-only
-  label), `type=email`, `autocomplete=email` and `inputmode=email`, "Free plan. No credit card required."
-  next to the button (A-003), the form keeps its value on error, and "Skip for now" on the profile step.
+  label), `type=email`, `autocomplete=email` and `inputmode=email`, "Free. No credit card required."
+  next to the button (A-003; "Free plan" until Stage 9, changed because this form does not create an FX Replay
+  plan, while the metadata and OG image still describe FX Replay's own free plan), the form keeps its value on error, and "Skip for now" on the profile step.
   Deferred: email typo suggestions and Google sign-in.
 - Validation uses the shared `createUserSchema` on blur and on submit; server field errors are shown on the field.
 - Double-submit guard: a `useRef` flag ignores submits while a request is in flight. The button uses

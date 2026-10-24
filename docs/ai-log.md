@@ -555,7 +555,8 @@ gives 8,155, 31,231, 13,911 and 4,918.
 
 **Written to production by checks (all `@example.test`, tagged `is_test`):** user `edcb55da-…` (Stage 3), the
 Stage 4 and Stage 6 smoke users, `8d86dbbc-…` (redesign check, 12:54:33 UTC) and `ba88f8d2-…` (Stage 9
-`verify-api`). PostHog `user_signed_up` in the last 3 days: four rows, two tagged.
+`verify-api`). PostHog `user_signed_up` over the last 3 days, queried at 13:23:50 UTC: 5 rows, 3 tagged (the Stage 6 smoke
+user, `8d86dbbc-…` and `ba88f8d2-…`); Stages 3 and 4 came before analytics.
 
 **Untagged internal traffic to exclude:** two quiz-arm signups with `is_test = false`, at 2026-10-24 11:28:58 UTC
 (distinct id `8212ad3f-…`) and 12:55:03 UTC (`640f682b-…`), plus the quiz-arm page views around them. Neither
