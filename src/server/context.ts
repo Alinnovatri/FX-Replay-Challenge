@@ -20,7 +20,11 @@ export function readVariant(request: Request): Variant | null {
 
 /** Test traffic is tagged, never dropped: the funnel filters on is_test = false (docs/ANALYTICS.md). */
 export function isTestTraffic(request: Request, email?: string): boolean {
+  const env = process.env.VERCEL_ENV;
   return (
+    // Previews share the PostHog key with production; their visitors are reviewers, never marketing traffic.
+    env === 'preview' ||
+    env === 'development' ||
     request.headers.get(TEST_HEADER) === '1' ||
     readCookie(request, TEST_COOKIE) === '1' ||
     Boolean(email?.endsWith(TEST_EMAIL_DOMAIN))

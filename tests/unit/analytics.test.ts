@@ -158,6 +158,13 @@ describe('proxy: experiment assignment', () => {
     vi.unstubAllEnvs();
   });
 
+  it('tags every relay event from a preview deployment as test traffic', async () => {
+    vi.stubEnv('VERCEL_ENV', 'preview');
+    await relay({ name: 'signup_started', props: {} }, { origin: 'https://app.test' });
+    vi.unstubAllEnvs();
+    expect(captured[0]?.properties).toMatchObject({ is_test: true });
+  });
+
   it('tags test traffic and honours an explicit override outside production', () => {
     const res = visit('https://app.test/?fxr_variant=quiz&fxr_test=1', '__Host-fxr_variant=control');
     expect(res.cookies.get('__Host-fxr_variant')?.value).toBe('quiz');

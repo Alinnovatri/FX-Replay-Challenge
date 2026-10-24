@@ -33,7 +33,7 @@ layout shift. Every event carries `variant`.
   - `signup_failed` per `signup_submitted`, by `error_code`: the variant must not raise errors.
   - Time from `landing_viewed` to `user_signed_up` (median): a large increase is a usability warning even if
     conversion holds.
-  - Core Web Vitals (Lighthouse CI on both pages, field data later): the variant must stay within the budgets.
+  - Core Web Vitals (Lighthouse CI on all three URLs, field data later): the variant must stay within the budgets.
   - `profile_completed` per `user_signed_up`: control only, because the quiz arm has no step after signup.
 - **Diagnostic (variant):** drop-off between `signup_started`, `quiz_step_completed` 1 and 2, and
   `signup_submitted`.
@@ -48,16 +48,17 @@ plan assumes 5 % landing-to-signup and a minimum detectable effect of +20 % rela
 | 5 % (planning value) | +20 % | 8,155 | 16,310 |
 | 5 % | +10 % | 31,231 | 62,462 |
 | 3 % | +20 % | 13,911 | 27,822 |
-| 8 % | +20 % | 4,917 | 9,834 |
+| 8 % | +20 % | 4,918 | 9,836 |
 
-Computed with `n = (z₀.₉₇₅ + z₀.₈)² · (p₁q₁ + p₂q₂) / (p₂ − p₁)²` (Python's `statistics.NormalDist`; the command
-is in `docs/ai-log.md`). After the first full week, recompute with the measured baseline and replace the
+Computed with `n = (z₀.₉₇₅ + z₀.₈)² · (p₁q₁ + p₂q₂) / (p₂ − p₁)²` (Python's `statistics.NormalDist`, rounded up;
+the command is in `docs/ai-log.md`, Stage 9). After the first full week, recompute with the measured baseline and replace the
 planning value. **Duration:** at least 14 days (two full weekly cycles) and until each arm reaches the sample,
 whichever is later. No peeking-based stops: the result is read once, at the planned sample.
 
 ## Decision rules
 
-Read at the planned sample, on `is_test = false` traffic only, after checking that the arms are balanced
+Read at the planned sample, on `is_test = false` traffic only, counting from the launch date (after the last
+pre-launch QA, so internal visits before it never enter the read window), after checking that the arms are balanced
 (sample ratio mismatch: a χ² test with p < 0.01 on assignment counts invalidates the run until fixed).
 
 - **Ship the variant** if the primary metric is higher with a 95 % confidence interval for the difference
@@ -71,7 +72,9 @@ Read at the planned sample, on `is_test = false` traffic only, after checking th
 ## Operating notes
 
 - PostHog: an insight "Signup funnel by variant" built from the funnel in ANALYTICS, `is_test = false`,
-  breakdown `variant`.
+  breakdown `variant`, date range starting at the launch timestamp.
+- **Launch:** TODO(owner): record the UTC launch time here and in `docs/ai-log.md` when real traffic starts.
+  Everything before it (QA, the fixed QA URLs, untagged manual checks) is outside the read window.
 - A change to either arm during the run restarts the count.
 - The experiment flag is the `__Host-fxr_variant` cookie; to end the test, change `assignVariant` to return the winner
   and keep the losing component until the next cleanup.

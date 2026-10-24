@@ -131,3 +131,27 @@ test('product screenshots load with explicit sizes and lazy loading below the fo
     await expect.poll(() => img.evaluate((el) => (el as HTMLImageElement).naturalWidth)).toBeGreaterThan(0);
   }
 });
+
+test('pages and the API send the security headers', async ({ request }) => {
+  for (const path of ['/', '/variants/quiz', '/api/health']) {
+    const headers = (await request.get(path)).headers();
+    expect(headers['content-security-policy']).toContain("frame-ancestors 'none'");
+    expect(headers['content-security-policy']).toContain("connect-src 'self'");
+    expect(headers['x-content-type-options']).toBe('nosniff');
+    expect(headers['x-frame-options']).toBe('DENY');
+    expect(headers['referrer-policy']).toBe('strict-origin-when-cross-origin');
+  }
+});
+
+test('every arm runs under the CSP without violations', async ({ page }) => {
+  const violations: string[] = [];
+  page.on('console', (msg) => {
+    if (msg.type() === 'error' && /Content Security Policy/i.test(msg.text())) violations.push(msg.text());
+  });
+  for (const path of ['/', '/variants/quiz', '/variants/control']) {
+    await page.goto(path);
+    await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+    for (const img of await page.locator('main img').all()) await img.scrollIntoViewIfNeeded();
+  }
+  expect(violations).toEqual([]);
+});

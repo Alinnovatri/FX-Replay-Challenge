@@ -8,7 +8,7 @@
     "node": "22.x"
   },
   "scripts": {
-    "dev": "DB_DRIVER=pglite PGLITE_DIR=.pglite node scripts/migrate.mjs && DB_DRIVER=pglite PGLITE_DIR=.pglite next dev",
+    "dev": "DB_DRIVER=pglite PGLITE_DIR=.pglite node scripts/migrate.mjs && DB_DRIVER=pglite PGLITE_DIR=.pglite ADMIN_TOKEN=${ADMIN_TOKEN:-local-dev-admin-token} SESSION_SECRET=${SESSION_SECRET:-local-dev-session-secret} ANALYTICS_SINK=${ANALYTICS_SINK:-log} next dev",
     "build": "DB_DRIVER=pglite PGLITE_DIR=memory:// next build",
     "start": "next start",
     "vercel-build": "node scripts/vercel-build.mjs",

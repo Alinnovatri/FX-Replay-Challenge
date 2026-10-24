@@ -77,7 +77,8 @@ conversion window of 1 day.
 - **One definition:** the primary metric is defined only here; EXPERIMENT and PLAN link to it.
 - **Server-confirmed conversion:** the conversion can't fire on a click, a validation error, a 409
   (`EMAIL_TAKEN` or `IDEMPOTENCY_CONFLICT`), a 500 or an idempotent replay (unit tests in
-  `tests/unit/users.test.ts`). A client timeout never reaches the server event path.
+  `tests/unit/users.test.ts`). A request the client gave up on (10 s timeout) can still convert on the server; the
+  retry is then an idempotent replay, so the conversion is still counted once.
 - **Closed contract:** event names and property values are enums validated on the server; a typo in code fails
   type checking, and a bad payload is a 400 that is visible in tests and logs, not a silent drop.
 - **No PII:** no email, name or free text in any property, distinct id or URL. The referrer is sent as a
@@ -88,12 +89,18 @@ conversion window of 1 day.
   link can't hide real conversions). An `@example.test` email also tags the `user_signed_up` event (only that
   event, since the email is known only there). Playwright and Lighthouse CI send the header on
   every request, the smoke and API scripts send it too, and every scripted user uses `example.test`. The funnel
-  filters `is_test = false`. The test users written to production are listed in `docs/ai-log.md`.
+  filters `is_test = false`. Every deployment other than production (`VERCEL_ENV` preview or development) is
+  tagged as test traffic too, because previews share the PostHog key. The test users written to production are
+  listed in `docs/ai-log.md`.
+- **Internal traffic:** people on the team use production only with the `x-fxr-test: 1` header (a header
+  extension; the 24-hour test cookie follows) and `smoke+…@example.test` emails. Untagged internal visits are
+  recorded in `docs/ai-log.md` by time window and excluded in the insight; the experiment's read window starts
+  after the last pre-launch QA (EXPERIMENT.md).
 - **Failures are loud:** a PostHog error or a missing `POSTHOG_PROJECT_KEY` is logged as `analytics_failed`
   (event name and error class only) and never breaks the signup.
 - **Relay hardening:** same-origin only (a foreign `Origin` is a 403), closed schema, 10 KB body cap. E2E and
-  Lighthouse run with `ANALYTICS_SINK=log`, so their events never reach PostHog. Rate limiting is Stage 7.
+  Lighthouse run with `ANALYTICS_SINK=log`, so their events never reach PostHog. Rate limiting was not prioritized (README, "Not prioritized").
 - **Known limits:** visitors who block cookies get no `__Host-fxr_aid` and their relay events are rejected (the
   conversion is still counted, with the user id as distinct id); clearing cookies starts a new visitor. Bots are
   not filtered beyond PostHog's defaults. A visitor who opens `/variants/quiz` or `/variants/control` directly is moved to
-  that arm (QA links); such links are not published, and `?fxr_variant=` only works outside production.
+  that arm (QA links); such links are not published, visits before the experiment's launch timestamp are outside its read window, and `?fxr_variant=` only works outside production.

@@ -315,6 +315,21 @@ describe('PATCH /users/:id', () => {
 });
 
 describe('configuration', () => {
+  it('fails with a 500 before creating anything when SESSION_SECRET is missing', async () => {
+    vi.stubEnv('SESSION_SECRET', '');
+    const log = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const res = await post({ email: 'nosecret@example.test' });
+    expect(res.status).toBe(500);
+    expect(JSON.parse(String(log.mock.calls[0]?.[0]))).toMatchObject({
+      errorClass: 'ConfigError',
+      setting: 'SESSION_SECRET',
+    });
+    expect(captured).toHaveLength(0);
+    vi.unstubAllEnvs();
+    // The account was not created: the same email signs up normally once the secret is back.
+    expect((await post({ email: 'nosecret@example.test' })).status).toBe(201);
+  });
+
   it('fails loudly with a 500 when ADMIN_TOKEN is missing, naming the setting in the log only', async () => {
     vi.stubEnv('ADMIN_TOKEN', '');
     const log = vi.spyOn(console, 'error').mockImplementation(() => {});

@@ -55,7 +55,7 @@ flowchart TB
 - **Postgres everywhere** (PGlite in tests, Neon in production): tests exercise the real constraints (unique
   email, SQLSTATE 23505). Trade-off: Neon's HTTP driver has no interactive transactions, so idempotency uses two
   statements with documented gaps (ADR-004).
-- **No password at signup** (owner decision 9): one field, minimum friction. Account access is out of scope; a
+- **No password at signup** (owner decision 9): one required field (email, plus an optional first name), minimum friction. Account access is out of scope; a
   signed 30-minute HttpOnly cookie lets the new user complete the optional profile.
 - **Server-side conversion and a first-party relay** (ADR-003): zero third-party JavaScript and a conversion
   that can't be blocked or faked by the browser, at the cost of PostHog's autocapture and session replay.
@@ -95,14 +95,14 @@ flowchart TB
 | CDN and edge | Vercel CDN for static assets; pages prerendered | `/` passes through `proxy.ts` and is `private, no-store` |
 | Caching | Static HTML and hashed assets; API responses `no-store` | Edge-cached variant pages per arm are a next step |
 | Observability | Structured JSON logs (error class and SQLSTATE only, request ids), Vercel runtime logs and errors, PostHog events, `/api/health` | No alerting yet |
-| Security | HSTS from Vercel, HttpOnly Secure cookies, admin token in constant time, CodeQL, gitleaks | See [SECURITY.md](SECURITY.md) for gaps |
+| Security | HSTS from Vercel, CSP and security headers (ADR-014), HttpOnly Secure cookies, admin token in constant time, CodeQL, gitleaks | See [SECURITY.md](SECURITY.md) for gaps |
 | Reliability | Stateless functions, managed Postgres, idempotent signup, smoke script | Single region; no rate limiting yet |
 
 ## What would change for a production FX Replay system
 
 - Create the account in FX Replay's real identity system (or hand off to its signup with the collected data)
   instead of a separate users table, with email verification and the app as the success destination.
-- Rate limiting and bot protection on `/users` and `/api/e`, a strict CSP and security headers, signed visitor ids.
+- Rate limiting and bot protection on `/users` and `/api/e`, a nonce-based strict CSP (the headers are in place, ADR-014), signed visitor ids.
 - Store analytics in FX Replay's existing PostHog project with a reverse proxy and server-side feature flags for
   experiments; replace the cookie flag with PostHog experiments once traffic justifies it.
 - Alerting on signup error rates and health, Sentry for client errors, error budgets per endpoint.

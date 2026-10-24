@@ -14,7 +14,7 @@ import {
   trust,
 } from '@/content/landing';
 // Product screenshots from FX Replay (brand/screenshots/SOURCES.md); statically imported so Next.js knows their
-// size (no layout shift) and serves resized AVIF/WebP.
+// size (no layout shift) and serves resized WebP.
 import heroShot from '../../../brand/screenshots/hero-poster.webp';
 import journalShot from '../../../brand/screenshots/backtest.webp';
 import replayShot from '../../../brand/screenshots/replay.webp';
@@ -77,6 +77,7 @@ export function Landing({ signup }: { signup: ReactNode }) {
           height={20}
           className="h-5 w-auto"
           unoptimized
+          loading="eager"
         />
         <TrackedLink ctaId="header" href="#signup" className={`${cta} min-h-11 px-5 text-sm`}>
           {CTA_LABEL}

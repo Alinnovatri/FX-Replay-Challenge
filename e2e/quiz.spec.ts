@@ -22,6 +22,7 @@ test('quiz-first: answers first, email last, with progress, back navigation and 
 
   await page.getByRole('button', { name: 'Continue' }).click();
   await expect(page.locator('[role="alert"]', { hasText: 'Choose the option closest to you' })).toBeVisible();
+  await expect(page.getByRole('radio').first()).toBeFocused();
 
   await page.getByRole('radio', { name: /Intermediate/ }).check();
   await page.getByRole('button', { name: 'Continue' }).click();

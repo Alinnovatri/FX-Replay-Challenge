@@ -68,6 +68,9 @@ don't send marketing email, so there is no marketing-consent checkbox. The PostH
 `anonymize_ips` off; Stage 6 turns it on, and analytics carry no PII (CLAUDE.md rule 7). A cookie banner is
 not added because we set no non-essential cookies before consent: the analytics identifier is first-party
 and its handling is decided in Stage 6 (ADR-003).
+TODO(owner): the notice asks users to accept FX Replay's Terms and Privacy Policy, but this project, not FX
+Replay, stores the account (A-004). It is kept as a faithful mock of FX Replay's own form; a real launch would
+use FX Replay's storage or add a line naming this project as the data holder.
 
 ## A-006
 

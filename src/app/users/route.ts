@@ -1,7 +1,7 @@
 import { createUserSchema, listUsersQuerySchema } from '@/contracts/users';
 import { track } from '@/server/analytics';
 import { eventContext } from '@/server/context';
-import { profileCookie, requireAdmin } from '@/server/auth';
+import { assertSessionSecret, profileCookie, requireAdmin } from '@/server/auth';
 import { HttpError, handle, json, logError, parseOr400, readJson } from '@/server/http';
 import { createUser, findIdempotent, listUsers, rememberIdempotent, requestHash } from '@/server/users';
 
@@ -12,6 +12,8 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 /** Create an account. Public; sets the short-lived self-service cookie for the optional profile step. */
 export async function POST(request: Request): Promise<Response> {
   return handle(async (requestId) => {
+    // Config first: without the secret the 201 can't carry its cookie, so nothing may be written or counted.
+    assertSessionSecret();
     const key = request.headers.get('idempotency-key') ?? undefined;
     if (key !== undefined && !UUID.test(key)) {
       throw new HttpError(400, 'VALIDATION_FAILED', 'Idempotency-Key must be a UUID', {
