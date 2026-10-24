@@ -1,6 +1,6 @@
-# FX Replay Challenge Guide 
+# FX Replay Challenge Guide
 
-Oct 23, 2026 · @Gibran Martínez
+Oct 24, 2026 · @Gibran Martínez
 
 **Assumptions and reading scope.** I read the full PDF: 9 pages, all legible. The document has no printed page numbers, so I cite pages in order (p. 1 to p. 9). I don't assume your experience level. Where I estimate times, I give ranges and explain what they depend on.
 
@@ -139,6 +139,7 @@ Create both the repository and the Vercel project with these names from the star
 | 7. Documentation | T15 | 45–75 min |
 | 8. Review and submission | T18 and checklist | 20–30 min |
 
+- **Order used:** the kickoff prompt's stages replace this roadmap for order and timing; notably, the walking skeleton is deployed early (Stage 2), not in phase 6.
 - **Total:** roughly 5.5 to 9.5 hours.
 - **The upper bound exceeds 6 h.** If you fall behind, cut in this order: P2, extra visual polish and the experiment flag. Never cut P0.
 - **Times depend on:**
@@ -178,7 +179,6 @@ Create both the repository and the Vercel project with these names from the star
 
 - The brand kit arrived without the `tokens/` and `source/` files its README lists.
 - It doesn't say when the 72 hours start.
-- The expected use of "update user" isn't defined, nor whether signup should require a password.
 
 **Challenges:**
 
@@ -213,13 +213,15 @@ Create both the repository and the Vercel project with these names from the star
 
 **Owner decisions (confirmed Oct 23, 2026):**
 
-1. **Palette and typography:** the brand kit is in `brand/` (`brand-kit.html`, `logos/`). Its README lists `tokens/` and `source/` PDFs that weren't delivered; Stage 0 generates the tokens from `brand-kit.html` and cross-checks them against fxreplay.com.
+1. **Palette and typography:** the brand kit is in `brand/` (`brand-kit.html`, `logos/`). Its README lists `tokens/` and `source/` PDFs that weren't delivered; Stage 0 generates the tokens from `brand-kit.html`; Stage 1 cross-checks them against fxreplay.com.
 2. **Deployment:** live, on Vercel, with Neon Postgres for the database and PostHog for analytics.
 3. **Repository:** public.
 4. **Submission:** sent by email.
 5. **FX Replay's logos and assets:** may be used.
 6. **Documents:** Markdown in the repo.
 7. **Time spent:** reported from the repo (`docs/ai-log.md` and the git history).
+8. **Update user:** an optional profile step after signup uses `PATCH` with a short-lived, single-user signed cookie set by `POST /users` (profile fields only, never email). The admin token protects `GET /users` and every other `PATCH`, and never reaches the browser.
+9. **Password:** signup asks for no password. This is a landing page whose goal is to capture the signup with minimal friction; account access is out of scope and documented as a next step. The exact fields are refined with the signup and cro skills.
 
 ## 8. Submission checklist
 
