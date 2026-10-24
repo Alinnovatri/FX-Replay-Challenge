@@ -43,3 +43,34 @@ window includes the owner's reply time, so working time is lower.
 **Budget used (measured):** the owner set the 6-hour budget to count from the first commit, `8888643` at
 23:27:55. By the end of Stage 0 (PR #1 at 00:37:27), 69.5 min of the 360 min were used: about 45 min of
 preparation before the kickoff and at most 24 min of Stage 0.
+
+## Stage 1: AI-native system (2026-10-24)
+
+**Start:** 00:45:41 (UTC-6), from `date`.
+
+**Delegated:** CLAUDE.md, six agents, four project skills, settings with the env-guard hook and MCP policy,
+`.mcp.json`, the config validator and its tests, vendoring four public skills.
+
+**Owner decisions:** budget re-planned to 240 min for Stages 1 to 9 (wall-clock budget ends 05:27:55); four
+vendored skills instead of seven.
+
+**Corrections and judgement calls:**
+
+- All four vendored skills expect `.agents/product-marketing.md`; the kickoff wants `docs/PRODUCT_CONTEXT.md`.
+  A symlink keeps one document instead of a copy that would drift; the validator rejects a copy.
+- `signup` lists a password as essential. Owner decision 9 overrides it; CLAUDE.md says project rules win.
+- The PostHog connector exposes one `exec` tool for reads and writes, so the "allow named read tools" policy
+  can't apply to it; it always asks (ADR-007).
+- The env-guard hook also blocks `cp .env.example .env.local`: creating secret files stays a manual owner step.
+- The format/lint hook is written but not registered: registering it before `package.json` exists would fail
+  every edit. Stage 2 registers it.
+
+**Validation:**
+
+- `node scripts/validate-claude-config.mjs`: valid.
+- `node --test scripts/validate-claude-config.test.mjs scripts/brand/brand.test.mjs`: 17 of 17 pass, including
+  negative cases (missing agent, edit tools on a reviewer, unpinned commit, bundled script, paid API key,
+  removed deny rule, missing hook script, unpinned MCP package, copied context file, env-guard cases).
+- env-guard checked by hand on 7 inputs: `.env`, `.env.local` and `.env.production` blocked (exit 2);
+  `.env.example`, `environment.ts` and `git status` allowed.
+- Vendored references/ files were scanned for API calls and keys, not read in full; SKILL.md files were read in full.

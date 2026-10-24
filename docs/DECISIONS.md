@@ -95,7 +95,35 @@ are added in Stage 2, once CI exists. This matches the one-PR-per-stage flow and
 
 ## ADR-007: MCP servers in use
 
-**Status:** proposed (finalised in Stage 1 with `.claude/settings.json`).
-Used: Vercel, PostHog, Playwright. The Supabase connector is disabled (owner, 2026-10-24); the project
-doesn't use Supabase. The PostHog connector currently authenticates as a project admin, which is not least
-privilege; Stage 1 allows named read tools and makes every write tool ask.
+**Status:** accepted (2026-10-24, Stage 1). Tool names are verified with `/mcp` after the restart.
+
+| Server | Where it is configured | Use | Policy in `.claude/settings.json` |
+| --- | --- | --- | --- |
+| Playwright (`@playwright/mcp@0.0.83`, isolated, headless) | `.mcp.json` (committed) | `qa-a11y-tester`; computed styles and screenshots of fxreplay.com | Navigation, snapshot, screenshot, evaluate and resize allowed; interaction tools ask |
+| Vercel | claude.ai connector (owner's account) | Deployment status, build and runtime logs | Named read tools allowed; env-var changes and reads, promote, rollback and rolling releases denied; everything else asks |
+| PostHog | claude.ai connector (owner's account) | Verify that events arrive (Stage 6) | Its single `exec` tool reads and writes, so it can't be split by name: it always asks |
+
+The Supabase connector is disabled (owner, 2026-10-24). Merges to `main` are denied twice: `gh pr merge` is
+denied in settings and branch protection requires a PR. Production schema changes outside migrate-on-deploy
+are denied (`drizzle-kit push`), and there is no database MCP.
+
+**Risk:** the PostHog connector authenticates as a project admin. Every call needs the owner's approval; a
+scoped personal API key is the production next step. The connectors are not in the repo, so a reviewer who
+clones it gets Playwright only; AI_WORKFLOW documents how to connect the other two.
+
+## ADR-008: Vendored public skills
+
+**Status:** accepted (2026-10-24, Stage 1).
+Vendored into `.claude/skills/` from `coreyhaines31/marketingskills` at commit
+`e85f3cbc2e4a79bf33b2a12e9bdd9087d414735b` (MIT): `product-marketing`, `copywriting`, `signup`, `cro`. Each
+folder keeps the upstream `LICENSE` and a `SOURCE.md` with the commit; `SKILL.md` and `references/` are
+unmodified, `evals/` is not vendored. Each SKILL.md was read before committing: none runs a tool or calls an
+API. The validator fails if a vendored skill gains an executable or a paid-API key reference.
+
+The skills produce drafts; `brand-copy-reviewer`, `qa-a11y-tester` and `perf-seo-auditor` review the output.
+Where a skill conflicts with an owner decision, `CLAUDE.md` wins (for example, `signup` treats a password as
+essential; owner decision 9 removes it). The skills read context from `.agents/product-marketing.md`, a
+symlink to `docs/PRODUCT_CONTEXT.md`, so there is one context document.
+
+**Deferred (budget re-plan):** `ab-testing` (same repo), Anthropic `frontend-design` and Vercel
+`web-design-guidelines`. Stage 5 uses the CLAUDE.md rules and the agents instead; vendoring them is a next step.
