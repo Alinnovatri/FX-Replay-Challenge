@@ -33,7 +33,8 @@ export function resolver(tokens) {
     if (primitive[name]) return primitive[name].$value;
     const token = semantic[name];
     if (!token) throw new Error(`contrast: unknown token "${name}"`);
-    if (token.$extensions.alpha !== undefined) throw new Error(`contrast: "${name}" is translucent; measure it composited`);
+    if (token.$extensions.alpha !== undefined)
+      throw new Error(`contrast: "${name}" is translucent; measure it composited`);
     const ref = token.$value.match(/^\{color\.primitive\.([a-z0-9-]+)\}$/)?.[1];
     if (!ref || !primitive[ref]) throw new Error(`contrast: "${name}" has an unresolvable value ${token.$value}`);
     return primitive[ref].$value;
@@ -42,19 +43,39 @@ export function resolver(tokens) {
 
 const SURFACES = ['bg-primary', 'bg-secondary', 'bg-tertiary'];
 const TEXT = [
-  'text-primary', 'text-secondary', 'text-disabled', 'text-brand', 'text-error', 'text-warning', 'text-success',
-  'card-text-secondary', 'btn-text-minimal-hover',
+  'text-primary',
+  'text-secondary',
+  'text-disabled',
+  'text-brand',
+  'text-error',
+  'text-warning',
+  'text-success',
+  'card-text-secondary',
+  'btn-text-minimal-hover',
 ];
 // Primitives worth considering for text on dark surfaces where the semantic token falls short.
 const CANDIDATES = ['blue-400', 'blue-500', 'error', 'warning', 'success'];
 const BUTTONS = [
-  ['btn-text', 'btn-bg-primary-active'], ['btn-text', 'btn-bg-primary-hover'], ['btn-text', 'btn-bg-primary-pressed'],
-  ['btn-text-disabled', 'btn-bg-primary-disabled'], ['btn-text', 'btn-bg-secondary-active'],
-  ['btn-text', 'btn-bg-secondary-hover'], ['btn-text-disabled', 'btn-bg-secondary-disabled'],
-  ['banner-color-paragraph', 'banner-bg-error'], ['banner-color-paragraph', 'banner-bg-warning'],
-  ['banner-color-paragraph', 'banner-bg-success'], ['banner-color-paragraph', 'banner-bg-info'],
+  ['btn-text', 'btn-bg-primary-active'],
+  ['btn-text', 'btn-bg-primary-hover'],
+  ['btn-text', 'btn-bg-primary-pressed'],
+  ['btn-text-disabled', 'btn-bg-primary-disabled'],
+  ['btn-text', 'btn-bg-secondary-active'],
+  ['btn-text', 'btn-bg-secondary-hover'],
+  ['btn-text-disabled', 'btn-bg-secondary-disabled'],
+  ['banner-color-paragraph', 'banner-bg-error'],
+  ['banner-color-paragraph', 'banner-bg-warning'],
+  ['banner-color-paragraph', 'banner-bg-success'],
+  ['banner-color-paragraph', 'banner-bg-info'],
 ];
-const BOUNDARIES = ['border-primary', 'border-secondary', 'border-tertiary', 'btn-border-outline', 'border-brand', 'border-error'];
+const BOUNDARIES = [
+  'border-primary',
+  'border-secondary',
+  'border-tertiary',
+  'btn-border-outline',
+  'border-brand',
+  'border-error',
+];
 
 export function renderReport(tokens) {
   const hex = resolver(tokens);
@@ -92,8 +113,11 @@ export function renderReport(tokens) {
     lines.push(`| ${token} \`${hex(token)}\` | ${ratio.toFixed(2)} | ${nonTextVerdict(ratio)} |`);
   }
 
-  const skipped = Object.entries(tokens.color.semantic).filter(([, t]) => t.$extensions.alpha !== undefined).map(([k]) => `\`${k}\``);
-  if (skipped.length) lines.push('', `Not measured (translucent, depends on what is behind it): ${skipped.join(', ')}.`);
+  const skipped = Object.entries(tokens.color.semantic)
+    .filter(([, t]) => t.$extensions.alpha !== undefined)
+    .map(([k]) => `\`${k}\``);
+  if (skipped.length)
+    lines.push('', `Not measured (translucent, depends on what is behind it): ${skipped.join(', ')}.`);
   return lines.join('\n') + '\n';
 }
 

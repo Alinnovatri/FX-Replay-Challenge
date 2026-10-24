@@ -19,7 +19,8 @@ if (!existsSync(pkg)) {
 
 const run = (args) => execFileSync('corepack', ['pnpm', 'exec', ...args], { cwd: root, stdio: 'pipe' });
 try {
-  if (['.ts', '.tsx', '.js', '.mjs', '.json', '.css', '.md'].includes(extname(file))) run(['prettier', '--write', file]);
+  if (['.ts', '.tsx', '.js', '.mjs', '.json', '.css', '.md'].includes(extname(file)))
+    run(['prettier', '--write', file]);
   if (['.ts', '.tsx', '.js', '.mjs'].includes(extname(file))) run(['eslint', '--max-warnings=0', file]);
   if (extname(file) === '.md') run(['markdownlint-cli2', file]);
 } catch (error) {

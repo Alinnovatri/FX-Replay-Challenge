@@ -1,7 +1,17 @@
 // Run with: node --test scripts/validate-claude-config.test.mjs
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { cpSync, mkdtempSync, mkdirSync, rmSync, readFileSync, writeFileSync, appendFileSync, unlinkSync, symlinkSync } from 'node:fs';
+import {
+  cpSync,
+  mkdtempSync,
+  mkdirSync,
+  rmSync,
+  readFileSync,
+  writeFileSync,
+  appendFileSync,
+  unlinkSync,
+  symlinkSync,
+} from 'node:fs';
 import { spawnSync } from 'node:child_process';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -58,7 +68,14 @@ test('a removed deny rule and a missing hook script are reported', (t) => {
   const dir = fixture(t);
   const settings = {
     permissions: { allow: [], deny: [] },
-    hooks: { PreToolUse: [{ matcher: 'Read', hooks: [{ type: 'command', command: 'node "$CLAUDE_PROJECT_DIR/.claude/hooks/missing.mjs"' }] }] },
+    hooks: {
+      PreToolUse: [
+        {
+          matcher: 'Read',
+          hooks: [{ type: 'command', command: 'node "$CLAUDE_PROJECT_DIR/.claude/hooks/missing.mjs"' }],
+        },
+      ],
+    },
   };
   writeFileSync(join(dir, '.claude/settings.json'), JSON.stringify(settings));
   const problems = validate(dir);
@@ -68,7 +85,10 @@ test('a removed deny rule and a missing hook script are reported', (t) => {
 
 test('an unpinned MCP package is reported', (t) => {
   const dir = fixture(t);
-  writeFileSync(join(dir, '.mcp.json'), JSON.stringify({ mcpServers: { playwright: { command: 'npx', args: ['-y', '@playwright/mcp@latest'] } } }));
+  writeFileSync(
+    join(dir, '.mcp.json'),
+    JSON.stringify({ mcpServers: { playwright: { command: 'npx', args: ['-y', '@playwright/mcp@latest'] } } }),
+  );
   assert.ok(validate(dir).some((p) => p.includes('must pin an exact package version')));
 });
 
@@ -90,7 +110,10 @@ test('a vendored skill that loses SOURCE.md is reported', (t) => {
 
 test('NotebookEdit on a reviewer and a server-wide MCP allow are reported', (t) => {
   const dir = fixture(t);
-  writeFileSync(join(dir, '.claude/agents/code-reviewer.md'), '---\nname: code-reviewer\ndescription: x\ntools: Read, NotebookEdit\n---\nVerdict: PASS | FAIL\n');
+  writeFileSync(
+    join(dir, '.claude/agents/code-reviewer.md'),
+    '---\nname: code-reviewer\ndescription: x\ntools: Read, NotebookEdit\n---\nVerdict: PASS | FAIL\n',
+  );
   const settings = JSON.parse(readFileSync(join(dir, '.claude/settings.json'), 'utf8'));
   settings.permissions.allow.push('mcp__my_server', 'mcp__playwright__browser_*');
   writeFileSync(join(dir, '.claude/settings.json'), JSON.stringify(settings));
@@ -163,14 +186,27 @@ test('env-guard exits 2 as a process, also through a symlinked dir and a path wi
   symlinkSync(join(dir, 'real'), join(dir, 'linked'));
   const event = JSON.stringify({ tool_name: 'Read', tool_input: { file_path: `/repo/${E}.local` } });
   const allowed = JSON.stringify({ tool_name: 'Read', tool_input: { file_path: '/repo/README.md' } });
-  for (const hook of [join(ROOT, '.claude/hooks/env-guard.mjs'), join(dir, 'real/env-guard.mjs'), join(dir, 'linked/env-guard.mjs')]) {
+  for (const hook of [
+    join(ROOT, '.claude/hooks/env-guard.mjs'),
+    join(dir, 'real/env-guard.mjs'),
+    join(dir, 'linked/env-guard.mjs'),
+  ]) {
     assert.equal(spawnSync(process.execPath, [hook], { input: event }).status, 2, hook);
     assert.equal(spawnSync(process.execPath, [hook], { input: allowed }).status, 0, hook);
   }
-  assert.equal(spawnSync(process.execPath, [join(ROOT, '.claude/hooks/env-guard.mjs')], { input: 'not json' }).status, 2);
+  assert.equal(
+    spawnSync(process.execPath, [join(ROOT, '.claude/hooks/env-guard.mjs')], { input: 'not json' }).status,
+    2,
+  );
   // A glob that can't be compiled must fail closed (exit 2), not crash with exit 1.
   const invalidGlob = JSON.stringify({ tool_name: 'Bash', tool_input: { command: `cat ${E} [z-a]` } });
-  assert.equal(spawnSync(process.execPath, [join(ROOT, '.claude/hooks/env-guard.mjs')], { input: invalidGlob }).status, 2);
+  assert.equal(
+    spawnSync(process.execPath, [join(ROOT, '.claude/hooks/env-guard.mjs')], { input: invalidGlob }).status,
+    2,
+  );
   const hugeBraces = JSON.stringify({ tool_name: 'Bash', tool_input: { command: 'echo ' + '{a,b}'.repeat(12) } });
-  assert.equal(spawnSync(process.execPath, [join(ROOT, '.claude/hooks/env-guard.mjs')], { input: hugeBraces }).status, 2);
+  assert.equal(
+    spawnSync(process.execPath, [join(ROOT, '.claude/hooks/env-guard.mjs')], { input: hugeBraces }).status,
+    2,
+  );
 });

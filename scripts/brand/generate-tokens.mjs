@@ -59,14 +59,21 @@ export function extractFontWeights(html) {
   const weights = {};
   for (const param of new URL(href[1].replaceAll('&amp;', '&')).searchParams.getAll('family')) {
     const [family, axes] = param.split(':');
-    const values = axes?.split('@')[1]?.split(';').map((v) => Number(v.split(',').at(-1)));
+    const values = axes
+      ?.split('@')[1]
+      ?.split(';')
+      .map((v) => Number(v.split(',').at(-1)));
     if (!values?.length || values.some(Number.isNaN)) fail(`brand-kit.html: cannot parse weights for ${family}`);
     weights[family.replaceAll('+', ' ')] = values;
   }
   return weights;
 }
 
-export const slug = (name) => name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+export const slug = (name) =>
+  name
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-|-$/g, '');
 
 const HEX = /^#[0-9A-F]{6}$/i;
 
@@ -74,7 +81,13 @@ const HEX = /^#[0-9A-F]{6}$/i;
 function resolveAlpha(value, primitives, key) {
   const match = value.match(/^rgba\((\d+),(\d+),(\d+),([\d.]+)\)$/);
   if (!match) fail(`override "${key}" has an unsupported value "${value}"`);
-  const hex = '#' + match.slice(1, 4).map((n) => Number(n).toString(16).padStart(2, '0')).join('').toUpperCase();
+  const hex =
+    '#' +
+    match
+      .slice(1, 4)
+      .map((n) => Number(n).toString(16).padStart(2, '0'))
+      .join('')
+      .toUpperCase();
   const base = key.replace(/-\d+$/, '');
   if (primitives[base]?.hex !== hex) fail(`override "${key}" (${hex}) does not match primitive "${base}"`);
   return { base, alpha: Number(match[4]) };
@@ -106,7 +119,9 @@ export function buildTokens(html, readme) {
         // The kit patches a primitive its scale does not define (e.g. blue-950).
         primitives[ref] ??= { group: 'Kit fallback', name: ref, hex: overrides[ref].toUpperCase(), unconfirmed: true };
         semantic[token] = { group, ref, unconfirmed: true };
-        unconfirmed.push(`${token} -> ${ref} (${overrides[ref]}): not in the primitive scale; value is the kit's own fallback`);
+        unconfirmed.push(
+          `${token} -> ${ref} (${overrides[ref]}): not in the primitive scale; value is the kit's own fallback`,
+        );
       } else if (ref in overrides) {
         semantic[token] = { group, ref, ...resolveAlpha(overrides[ref], primitives, ref) };
       } else {
@@ -119,12 +134,17 @@ export function buildTokens(html, readme) {
   const declared = (label) => Number(readme.match(new RegExp(`\\*\\*${label}\\*\\* \\((\\d+)\\)`))?.[1]);
   const primCount = Object.values(primitives).filter((p) => !p.unconfirmed).length;
   const semCount = Object.keys(semantic).length;
-  if (primCount !== declared('Primitives')) fail(`parsed ${primCount} primitives, README declares ${declared('Primitives')}`);
-  if (semCount !== declared('Semantic')) fail(`parsed ${semCount} semantic tokens, README declares ${declared('Semantic')}`);
+  if (primCount !== declared('Primitives'))
+    fail(`parsed ${primCount} primitives, README declares ${declared('Primitives')}`);
+  if (semCount !== declared('Semantic'))
+    fail(`parsed ${semCount} semantic tokens, README declares ${declared('Semantic')}`);
 
   const weights = extractFontWeights(html);
   const fonts = {};
-  for (const [role, cssVar] of [['display', 'display'], ['body', 'sans']]) {
+  for (const [role, cssVar] of [
+    ['display', 'display'],
+    ['body', 'sans'],
+  ]) {
     const stack = extractFontStack(html, cssVar);
     if (!weights[stack[0]]) fail(`font "${stack[0]}" (--${cssVar}) is not loaded by the kit's Google Fonts link`);
     fonts[role] = { family: stack[0], stack, weights: weights[stack[0]] };
@@ -139,14 +159,22 @@ export function renderJson(tokens, sourceHash) {
     color.primitive[key] = {
       $type: 'color',
       $value: p.hex,
-      $extensions: { group: p.group, ...(p.brand ? { brand: true } : {}), ...(p.unconfirmed ? { status: 'unconfirmed' } : {}) },
+      $extensions: {
+        group: p.group,
+        ...(p.brand ? { brand: true } : {}),
+        ...(p.unconfirmed ? { status: 'unconfirmed' } : {}),
+      },
     };
   }
   for (const [key, s] of Object.entries(tokens.semantic)) {
     color.semantic[key] = {
       $type: 'color',
       $value: `{color.primitive.${s.base ?? s.ref}}`,
-      $extensions: { group: s.group, ...(s.alpha !== undefined ? { alpha: s.alpha } : {}), ...(s.unconfirmed ? { status: 'unconfirmed' } : {}) },
+      $extensions: {
+        group: s.group,
+        ...(s.alpha !== undefined ? { alpha: s.alpha } : {}),
+        ...(s.unconfirmed ? { status: 'unconfirmed' } : {}),
+      },
     };
   }
   const font = {};
@@ -174,14 +202,17 @@ export function renderCss(tokens, sourceHash) {
   }
   lines.push('', '  /* Semantic: build with these. */');
   for (const [key, s] of Object.entries(tokens.semantic)) {
-    const value = s.alpha !== undefined
-      ? `color-mix(in srgb, var(--color-${s.base}) ${Math.round(s.alpha * 100)}%, transparent)`
-      : `var(--color-${s.ref})`;
+    const value =
+      s.alpha !== undefined
+        ? `color-mix(in srgb, var(--color-${s.base}) ${Math.round(s.alpha * 100)}%, transparent)`
+        : `var(--color-${s.ref})`;
     lines.push(`  --${key}: ${value};${s.unconfirmed ? ' /* unconfirmed */' : ''}`);
   }
   lines.push('', '  /* Typography */');
   for (const [role, f] of Object.entries(tokens.fonts)) {
-    lines.push(`  --font-${role}: ${f.stack.map((family) => (/\s/.test(family) ? `'${family}'` : family)).join(', ')};`);
+    lines.push(
+      `  --font-${role}: ${f.stack.map((family) => (/\s/.test(family) ? `'${family}'` : family)).join(', ')};`,
+    );
   }
   lines.push('}', '');
   return lines.join('\n');
@@ -198,9 +229,13 @@ export function generate() {
 function main(argv) {
   const { tokens, outputs } = generate();
   if (argv.includes('--check')) {
-    const stale = Object.entries(outputs).filter(([path, content]) => !existsSync(path) || readFileSync(path, 'utf8') !== content);
+    const stale = Object.entries(outputs).filter(
+      ([path, content]) => !existsSync(path) || readFileSync(path, 'utf8') !== content,
+    );
     if (stale.length) {
-      console.error(`Stale brand tokens: ${stale.map(([p]) => relative(ROOT, p)).join(', ')}. Run: node scripts/brand/generate-tokens.mjs`);
+      console.error(
+        `Stale brand tokens: ${stale.map(([p]) => relative(ROOT, p)).join(', ')}. Run: node scripts/brand/generate-tokens.mjs`,
+      );
       process.exit(1);
     }
     console.log('Brand tokens are up to date.');
@@ -208,7 +243,9 @@ function main(argv) {
   }
   mkdirSync(OUT_DIR, { recursive: true });
   for (const [path, content] of Object.entries(outputs)) writeFileSync(path, content);
-  console.log(`Wrote ${Object.keys(tokens.primitives).length} primitives, ${Object.keys(tokens.semantic).length} semantic tokens, ${Object.keys(tokens.fonts).length} font roles.`);
+  console.log(
+    `Wrote ${Object.keys(tokens.primitives).length} primitives, ${Object.keys(tokens.semantic).length} semantic tokens, ${Object.keys(tokens.fonts).length} font roles.`,
+  );
   for (const note of tokens.unconfirmed) console.warn(`UNCONFIRMED ${note}`);
 }
 
