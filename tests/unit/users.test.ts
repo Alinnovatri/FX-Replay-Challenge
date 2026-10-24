@@ -100,6 +100,7 @@ describe('POST /users', () => {
     const second = await post({ email: 'retry@example.test' }, { 'idempotency-key': key });
     expect(second.status).toBe(201);
     expect(second.headers.get('idempotent-replayed')).toBe('true');
+    expect(second.headers.get('location')).toBe(first.headers.get('location'));
     expect((await second.json()).user.id).toBe((await first.json()).user.id);
     expect(events).toHaveLength(1);
   });
@@ -112,6 +113,32 @@ describe('POST /users', () => {
     expect(res.status).toBe(409);
     expect((await res.json()).error.code).toBe('EMAIL_TAKEN');
     expect(res.headers.get('set-cookie')).toBeNull();
+  });
+
+  it('still returns 201 and tracks the conversion when storing the idempotency record fails', async () => {
+    // Lookups still work; only storing the replay record fails, after the user row is committed.
+    await client.exec(`create function reject_insert() returns trigger language plpgsql as $$
+      begin raise exception 'storage unavailable'; end $$;
+      create trigger reject_idempotency before insert on idempotency_keys for each row execute function reject_insert();`);
+    const log = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const res = await post({ email: 'kept@example.test' }, { 'idempotency-key': crypto.randomUUID() });
+    expect(res.status).toBe(201);
+    expect(events.map((e) => e.name)).toEqual(['user_signed_up']);
+    const lines = log.mock.calls.map((call) => String(call[0]));
+    expect(lines.some((line) => line.includes('idempotency_store_failed'))).toBe(true);
+    expect(lines.join('')).not.toContain('kept@example.test');
+  });
+
+  it('returns 201 even when the analytics sink throws, logging no personal data', async () => {
+    setSinkForTests(async () => {
+      throw new Error('posthog down for kept@example.test');
+    });
+    const log = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const res = await post({ email: 'kept@example.test' });
+    expect(res.status).toBe(201);
+    const line = String(log.mock.calls[0]?.[0]);
+    expect(JSON.parse(line)).toMatchObject({ event: 'analytics_failed', name: 'user_signed_up', errorClass: 'Error' });
+    expect(line).not.toContain('kept@example.test');
   });
 
   it('rejects an oversized body', async () => {
@@ -212,6 +239,7 @@ describe('PATCH /users/:id', () => {
     const { user, cookie } = await signUp('one@example.test');
     const other = await signUp('two@example.test');
     expect((await patch(user.id, { email: 'x@example.test' }, cookie)).status).toBe(403);
+    expect((await patch(user.id, { email: 'not-an-email' }, cookie)).status).toBe(403);
     expect((await patch(other.user.id, { firstName: 'Eve' }, cookie)).status).toBe(403);
   });
 

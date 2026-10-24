@@ -23,9 +23,12 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
       throw new HttpError(401, 'UNAUTHORIZED', 'Sign up again or use an admin token to update this user');
     if (!admin && selfId !== id) throw new HttpError(403, 'FORBIDDEN', 'You can only update your own profile');
 
-    const changes = parseOr400(adminUpdateSchema.safeParse(await readJson(request)));
-    if (!admin && changes.email !== undefined)
+    const body = await readJson(request);
+    // Checked before validation so a cookie holder always gets 403 for email, whatever its value.
+    if (!admin && typeof body === 'object' && body !== null && 'email' in body) {
       throw new HttpError(403, 'FORBIDDEN', 'Email can only be changed by an admin');
+    }
+    const changes = parseOr400(adminUpdateSchema.safeParse(body));
     if (Object.keys(changes).length === 0)
       throw new HttpError(400, 'VALIDATION_FAILED', 'Send at least one field to update');
 

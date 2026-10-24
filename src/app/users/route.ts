@@ -1,7 +1,7 @@
 import { createUserSchema, listUsersQuerySchema } from '@/contracts/users';
 import { track } from '@/server/analytics';
 import { profileCookie, requireAdmin } from '@/server/auth';
-import { HttpError, handle, json, parseOr400, readJson } from '@/server/http';
+import { HttpError, handle, json, logError, parseOr400, readJson } from '@/server/http';
 import { createUser, findIdempotent, listUsers, rememberIdempotent, requestHash } from '@/server/users';
 
 export const dynamic = 'force-dynamic';
@@ -10,7 +10,7 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 /** Create an account. Public; sets the short-lived self-service cookie for the optional profile step. */
 export async function POST(request: Request): Promise<Response> {
-  return handle(async () => {
+  return handle(async (requestId) => {
     const key = request.headers.get('idempotency-key') ?? undefined;
     if (key !== undefined && !UUID.test(key)) {
       throw new HttpError(400, 'VALIDATION_FAILED', 'Idempotency-Key must be a UUID', {
@@ -34,6 +34,7 @@ export async function POST(request: Request): Promise<Response> {
         return json({ user: previous.body }, previous.status, {
           'set-cookie': profileCookie(previous.userId),
           'idempotent-replayed': 'true',
+          location: `/users/${previous.userId}`,
         });
       }
     }
@@ -49,13 +50,22 @@ export async function POST(request: Request): Promise<Response> {
           return json({ user: winner.body }, winner.status, {
             'set-cookie': profileCookie(winner.userId),
             'idempotent-replayed': 'true',
+            location: `/users/${winner.userId}`,
           });
         }
       }
       throw error;
     }
-    if (key) await rememberIdempotent(key, hash, user);
+    // The account exists from here on: count the conversion first, then store the replay record.
     await track({ name: 'user_signed_up', userId: user.id });
+    if (key) {
+      try {
+        await rememberIdempotent(key, hash, user);
+      } catch (error) {
+        // Losing the replay record only weakens retries (they get 409 EMAIL_TAKEN); the signup itself succeeded.
+        logError('idempotency_store_failed', error, requestId);
+      }
+    }
     return json({ user }, 201, { 'set-cookie': profileCookie(user.id), location: `/users/${user.id}` });
   });
 }
