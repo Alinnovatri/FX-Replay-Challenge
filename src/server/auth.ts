@@ -51,6 +51,11 @@ export function verifyProfileToken(token: string | undefined, now = Date.now()):
   }
 }
 
+/** Throws a ConfigError when SESSION_SECRET is missing, so callers can fail before any side effect. */
+export function assertSessionSecret(): void {
+  requiredEnv('SESSION_SECRET');
+}
+
 export function profileCookie(userId: string): string {
   return `${PROFILE_COOKIE}=${signProfileToken(userId)}; Path=/; Max-Age=${PROFILE_COOKIE_MAX_AGE}; HttpOnly; Secure; SameSite=Strict`;
 }
