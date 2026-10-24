@@ -33,7 +33,7 @@ Facts we may use in copy, all read on 2026-10-24:
 | Features: Replay mode, trading journal, prop firm simulator, custom indicators, economic calendar, AI analysis | [fxreplay.com](https://fxreplay.com/) |
 | No coding needed; built for manual traders practising execution | [fxreplay.com FAQ](https://fxreplay.com/) |
 | "Over 1 million traders have used it" | [fxreplay.com FAQ](https://fxreplay.com/) |
-| Not a broker; educational and backtesting platform only | Site footer disclosure |
+| Not a broker; educational and backtesting platform only | [fxreplay.com footer disclosure](https://fxreplay.com/) |
 
 Not used: testimonials and their names (the site itself warns they "may not reflect typical results"),
 paid-plan prices, and the pricing headline about profitable trading (against our no-performance-promise
@@ -52,7 +52,7 @@ give. Account access is a documented next step (owner decision 9).
 **Status:** open.
 Signup shows the same notice FX Replay's own signup uses, linking to their Privacy Policy and Terms. We
 don't send marketing email, so there is no marketing-consent checkbox. The PostHog project has
-`anonymize_ips` off; Stage 6 turns it on, and analytics carry no PII (working rule 9). A cookie banner is
+`anonymize_ips` off; Stage 6 turns it on, and analytics carry no PII (CLAUDE.md rule 7). A cookie banner is
 not added because we set no non-essential cookies before consent: the analytics identifier is first-party
 and its handling is decided in Stage 6 (ADR-003).
 
@@ -70,10 +70,26 @@ The kit loads JetBrains Mono only for its own swatch labels; it is not a brand f
 
 ## A-008
 
-**Status:** open (cross-check in Stage 1).
-fxreplay.com, read on 2026-10-24, renders its primary CTA as a white button with `#030303` text, uses
-Lato 700 for the hero `h1` at 37 px, and sets `body` to Nunito Sans on pure black. The kit's primary
-button is `blue-600`. Stage 1 records every mismatch between generated tokens and computed styles here.
+**Status:** open.
+Cross-check of the generated tokens against the computed styles of [fxreplay.com](https://fxreplay.com/),
+read on 2026-10-24 with the Playwright MCP at its default desktop viewport. OKLCH values were converted to
+sRGB hex. Matches: Lato for headings, Nunito Sans for body, `h2` text `#F6F6F6` (`neutral-50`), the nav
+"Try for free" button fill `#0260FD` (`blue-600`), and the hero CTA text `#030303` (`dark-900`).
+
+| Element | Site (computed) | Generated token | Mismatch |
+| --- | --- | --- | --- |
+| Page background | `#000000` | `bg-primary` = `dark-900` `#030303` | Site uses pure black (`dark-950`) |
+| Body text | `#FFFFFF` | `text-primary` = `neutral-50` `#F6F6F6` | Site uses pure white, not in the kit |
+| Paragraph text | `#E9E9E9` | `text-secondary` = `neutral-200` `#D1D1D1` | Not a kit value (nearest `neutral-100` `#E7E7E7`) |
+| Hero CTA "Get started for free" | White fill, `#030303` text, pill radius | `btn-bg-primary-active` = `blue-600` | Site's primary hero button is white, not blue |
+| Default border | `#1F1F1F` | `border-primary` = `dark-700` `#1A1A1A` | Not a kit value |
+| Feature card border | `#173D85` | `border-brand` = `blue-600` | Not a kit value (nearest `blue-800` `#01307F`) |
+| Button font weight | Lato 400 at 14 px | No type scale in the kit | Recorded for Stage 5 |
+| Hero `h1` | Lato 700 at 54 px | No type scale in the kit | Size depends on viewport; recorded for Stage 5 |
+
+The site has drifted from the kit in small ways. The project follows the kit (the delivered source), adjusted
+only by ADR-005 for contrast. Stage 5 may adopt the white primary CTA if the brand review agrees; that would be
+a decision recorded in DECISIONS, not a token edit.
 
 ## A-009
 

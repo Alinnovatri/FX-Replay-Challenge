@@ -43,3 +43,79 @@ window includes the owner's reply time, so working time is lower.
 **Budget used (measured):** the owner set the 6-hour budget to count from the first commit, `8888643` at
 23:27:55. By the end of Stage 0 (PR #1 at 00:37:27), 69.5 min of the 360 min were used: about 45 min of
 preparation before the kickoff and at most 24 min of Stage 0.
+
+## Stage 1: AI-native system (2026-10-24)
+
+**Start:** 00:45:41 (UTC-6), from `date`.
+
+**Delegated:** CLAUDE.md, six agents, four project skills, settings with the env-guard hook and MCP policy,
+`.mcp.json`, the config validator and its tests, vendoring four public skills.
+
+**Owner decisions:** budget re-planned to 240 min for Stages 1 to 9 (wall-clock budget ends 05:27:55); four
+vendored skills instead of seven.
+
+**Corrections and judgement calls:**
+
+- All four vendored skills expect `.agents/product-marketing.md`; the kickoff wants `docs/PRODUCT_CONTEXT.md`.
+  A symlink keeps one document instead of a copy that would drift; the validator rejects a copy.
+- `signup` lists a password as essential. Owner decision 9 overrides it; CLAUDE.md says project rules win.
+- The PostHog connector exposes one `exec` tool for reads and writes, so the "allow named read tools" policy
+  can't apply to it; it always asks (ADR-007).
+- The env-guard hook also blocks `cp .env.example .env.local`: creating secret files stays a manual owner step.
+- The format/lint hook is written but not registered: registering it before `package.json` exists would fail
+  every edit. Stage 2 registers it.
+
+**Validation:**
+
+- `node scripts/validate-claude-config.mjs`: valid.
+- `node --test scripts/validate-claude-config.test.mjs scripts/brand/brand.test.mjs`: 17 of 17 pass, including
+  negative cases (missing agent, edit tools on a reviewer, unpinned commit, bundled script, paid API key,
+  removed deny rule, missing hook script, unpinned MCP package, copied context file, env-guard cases).
+- env-guard checked by hand on 7 inputs: `.env`, `.env.local` and `.env.production` blocked (exit 2);
+  `.env.example`, `environment.ts` and `git status` allowed.
+- Vendored references/ files were scanned for API calls and keys, not read in full; SKILL.md files were read in full.
+
+**After the restart (00:58):** the project agents, the eight skills and the `playwright` project MCP server
+loaded; Vercel and PostHog connectors connected; Supabase disabled. The owner saw no trust prompt for
+`playwright` because `enabledMcpjsonServers` pre-approves it. `product-marketing` drafted
+`docs/PRODUCT_CONTEXT.md` from fxreplay.com, pricing and signup, and the token cross-check went into A-008.
+
+**Project agents used for the first time, both FAIL, both acted on:**
+
+- `brand-copy-reviewer`: 1 blocker (a fact without a URL), 1 major (StoryBrand plan implied the journal is in
+  the free plan, unsupported), 9 minor (testimonial quotes in a file drafting skills read, unlabelled
+  inferences, wrong rule numbers). All fixed.
+- `code-reviewer`: 1 blocker. The first env-guard regex let `cat .env*`, `.envrc`, `.env-local`,
+  `.env.example.bak`, Glob and Grep globs through, and the hook failed open when the project path held a space
+  or a symlink. Claude's own tests had missed all of it because they never ran the hook as a process. Fixed by
+  matching path segments instead of the following character, comparing real paths at the entrypoint, and adding
+  process-level tests (including a symlinked dir and a path with a space). Also fixed: the validator skipped a
+  vendored skill that lost its SOURCE.md and missed `NotebookEdit` and `mcp__my_server`; deny rules gained the
+  missing `git push`, `drizzle-kit` and `vercel --prod` forms; PLAN budget arithmetic corrected (282 min left at
+  the Stage 1 start, not 284). The owner approved the settings changes before they were made, since a subagent
+  can't authorise permission edits.
+- The hardened hook immediately blocked Claude's own settings edit and this log entry, whose shell commands named
+  `.env` files; both were redone without a shell command (a script file, and the Edit tool). Accepted false
+  positive: any shell command text that mentions `.env`.
+
+**Validation:** `node --test scripts/validate-claude-config.test.mjs scripts/brand/brand.test.mjs`: 20 of 20
+pass. `node scripts/validate-claude-config.mjs`: valid.
+
+**Second `code-reviewer` pass: FAIL, fixed with the owner's approval.** Globs that don't start with `.env`
+(`.*`, `.e*`, `.[e]nv`), names split by quotes or backslashes (`.e''nv`), percent-encoded URLs and partial MCP
+wildcards (`mcp__playwright__browser_*`) still got through. The hook now strips quotes and backslashes,
+decodes URLs (blocking on decode failure), and tests each glob segment against known secret names; a leading
+`*` is ignored because it doesn't expand to dotfiles. Grep's `pattern` (a content regex) is no longer checked,
+so code can be searched for `.env` references. The hook and ADR-007 now say it is best-effort: text matching
+can't see `grep -r` or shell variables, and the real controls are gitignore plus no production secrets in the
+session. Lesson: Claude wrote the first guard and its tests from the cases it thought of; two adversarial
+review passes found 20 more.
+
+**Third `code-reviewer` pass (owner-requested): FAIL, final round applied with the owner's approval.** The
+blocker was serious: an invalid glob such as `[z-a]` made the hook throw and exit 1, and Claude Code only
+blocks on exit 2, so one extra token let any command through. The hook now fails closed (any internal error
+exits 2), expands braces (`.{e,x}nv`, `.e{n,}v`), strips ANSI-C quote markers (`.e$'n'v`), and checks
+`.env.test`, `.env.staging` and the `.local` variants; the root deny list gained the `.env-*` rule; ADR-007
+names the two accepted false positives (shell text that mentions the name, and `sed 's/.*//'`). The owner
+closed the review loop after this round: the hook is best-effort by design. Tests: 20 of 20 pass, now
+including fail-closed process checks for an invalid glob and an oversized brace expansion.
