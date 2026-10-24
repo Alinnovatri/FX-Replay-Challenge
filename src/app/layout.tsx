@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import localFont from 'next/font/local';
+import { meta, SITE_URL } from '@/content/landing';
 import './globals.css';
 
 // Self-hosted from pinned @fontsource packages (OFL-1.1): the build never fetches fonts over the network.
@@ -36,8 +37,18 @@ const nunito = localFont({
 });
 
 export const metadata: Metadata = {
-  title: 'Try FX Replay Free | FX Replay Challenge',
-  description: 'Backtest trading strategies on real historical market data. Free to start, no credit card required.',
+  metadataBase: new URL(SITE_URL),
+  title: meta.title,
+  description: meta.description,
+  alternates: { canonical: '/' },
+  openGraph: {
+    title: meta.title,
+    description: meta.description,
+    url: '/',
+    siteName: 'FX Replay Challenge',
+    type: 'website',
+  },
+  twitter: { card: 'summary_large_image', title: meta.title, description: meta.description },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
