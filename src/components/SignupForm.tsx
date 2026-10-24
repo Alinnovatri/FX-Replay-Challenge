@@ -75,6 +75,7 @@ export function SignupForm({
   const [firstName, setFirstName] = useState(initialName);
   const [fieldError, setFieldError] = useState<string | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
+  const [canRetry, setCanRetry] = useState(true);
   const [status, setStatus] = useState<Status>('idle');
   const [user, setUser] = useState<User | null>(null);
   const inFlight = useRef(false);
@@ -131,6 +132,7 @@ export function SignupForm({
     track('signup_failed', { error_code: errorCode(result) });
     const message = messageFor(result);
     if (message.resetKey) attempt.current = null;
+    setCanRetry(message.retry);
     setStatus('error');
     if (message.field) {
       setFieldError(message.field);
@@ -250,17 +252,19 @@ export function SignupForm({
             <span aria-hidden="true">⚠ </span>
             {formError}
           </p>
-          <button
-            type="button"
-            onClick={() => {
-              // Keep focus on a stable control: this button unmounts when the retry clears the error.
-              submitRef.current?.focus();
-              void submit();
-            }}
-            className="min-h-11 rounded-full border border-input-border px-4 font-bold text-text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
-          >
-            Try again
-          </button>
+          {canRetry ? (
+            <button
+              type="button"
+              onClick={() => {
+                // Keep focus on a stable control: this button unmounts when the retry clears the error.
+                submitRef.current?.focus();
+                void submit();
+              }}
+              className="min-h-11 rounded-full border border-input-border px-4 font-bold text-text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+            >
+              Try again
+            </button>
+          ) : null}
         </div>
       ) : null}
       <p id={ids.note} className="text-sm text-text-secondary">
