@@ -40,6 +40,7 @@
       "Read(./.envrc)",
       "Read(./.env.test)",
       "Read(./.env.staging)",
+      "Read(./.env-*)",
       "Read(./**/.env)",
       "Read(./**/.env.local)",
       "Read(./**/.env.*.local)",

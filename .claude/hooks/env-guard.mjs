@@ -1,22 +1,43 @@
 #!/usr/bin/env node
 // PreToolUse hook: a best-effort guard against tool calls that name a .env file other than .env.example.
-// Exit code 2 blocks the call and shows the message to Claude.
+// Exit code 2 blocks the call and shows the message to Claude. Any internal error also exits 2 (fails closed).
 //
 // It matches text, so it cannot be complete: a recursive read (`grep -r KEY .`), a shell variable or a command
 // substitution can still reach a secret file. The real controls are that .env files are gitignored and that the
 // session never holds production secrets (ADR-007). This hook catches the direct and accidental cases:
-//   - every path-like field (file paths, globs, shell commands, URLs) is decoded, stripped of quotes and
-//     backslashes, and split into segments;
+//   - every path-like field (file paths, globs, shell commands, URLs) is URL-decoded, stripped of quotes,
+//     ANSI-C quote markers ($'...') and backslashes, brace-expanded ({a,b}), and split into segments;
 //   - a segment starting with ".env" is blocked unless it is exactly ".env.example";
-//   - a glob segment (*, ?, [...]) is blocked when it could match a .env file; a leading "*" is ignored because
-//     shell and glob matching don't expand it to dotfiles.
-// Known false positive, accepted: shell text that merely mentions ".env", such as a commit message.
+//   - a glob segment (*, ?, [...]) is blocked when it matches a known secret name; a leading "*" is ignored
+//     because shell and glob matching don't expand it to dotfiles; a glob that can't be compiled is blocked.
+// Accepted false positives: shell text that mentions ".env" (for example a commit message), and regex text such
+// as `sed 's/.*//'`, because ".*" is also a shell glob that expands to dotfiles.
 import { readFileSync, realpathSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 
 const FIELDS = ['file_path', 'path', 'pattern', 'glob', 'command', 'notebook_path', 'url'];
 const SEPARATORS = /[\s`<>()=:;,&|{}/]+/;
-const SECRET_NAMES = ['.env', '.env.local', '.envrc', '.env.production', '.env.development', '.env-local'];
+const SECRET_NAMES = [
+  '.env', '.envrc', '.env-local', '.env.local', '.env.production', '.env.development', '.env.test', '.env.staging',
+  '.env.production.local', '.env.development.local', '.env.test.local',
+];
+const MAX_EXPANSIONS = 256;
+
+/** Expands simple shell brace alternatives: ".e{n,}v" -> [".env", ".ev"]. */
+export function expandBraces(token) {
+  const results = [];
+  const queue = [token];
+  while (queue.length) {
+    const current = queue.shift();
+    const match = current.match(/\{([^{}]*,[^{}]*)\}/);
+    if (!match) { results.push(current); continue; }
+    for (const option of match[1].split(',')) {
+      queue.push(current.slice(0, match.index) + option + current.slice(match.index + match[0].length));
+    }
+    if (queue.length + results.length > MAX_EXPANSIONS) throw new Error('brace expansion too large');
+  }
+  return results;
+}
 
 function globToRegExp(glob) {
   let source = '';
@@ -30,18 +51,25 @@ function globToRegExp(glob) {
       else { source += `[${glob.slice(i + 1, end).replace(/^!/, '^')}]`; i = end; }
     } else source += char.replace(/[.+^${}()|\\]/g, '\\$&');
   }
-  return new RegExp(`^${source}$`, 'i');
+  return new RegExp(`^${source}$`, 'i'); // throws on an invalid class; the caller treats that as a hit
+}
+
+function isSecretSegment(segment) {
+  if (!segment || segment === '.env.example') return false;
+  if (/^\.env/i.test(segment)) return true;
+  if (!/[*?[]/.test(segment) || segment.startsWith('*')) return false;
+  try {
+    const pattern = globToRegExp(segment);
+    return SECRET_NAMES.some((name) => pattern.test(name));
+  } catch {
+    return true;
+  }
 }
 
 export function envSegments(value) {
-  const cleaned = value.replace(/['"\\]/g, '');
-  return cleaned.split(SEPARATORS).filter((segment) => {
-    if (!segment || segment === '.env.example') return false;
-    if (/^\.env/i.test(segment)) return true;
-    if (!/[*?[]/.test(segment) || segment.startsWith('*')) return false;
-    const pattern = globToRegExp(segment);
-    return SECRET_NAMES.some((name) => pattern.test(name));
-  });
+  const cleaned = value.replace(/\$(?=['"])/g, '').replace(/['"\\]/g, '');
+  const expanded = cleaned.split(/\s+/).flatMap(expandBraces).join(' ');
+  return expanded.split(SEPARATORS).filter(isSecretSegment);
 }
 
 export function blockedReason(event) {
@@ -67,14 +95,13 @@ export function blockedReason(event) {
 }
 
 function main() {
-  let event;
+  let reason;
   try {
-    event = JSON.parse(readFileSync(0, 'utf8'));
+    reason = blockedReason(JSON.parse(readFileSync(0, 'utf8')));
   } catch (error) {
-    console.error(`env-guard: could not parse hook input (${error.message})`);
+    console.error(`env-guard: blocked because the check itself failed (${error.message})`);
     process.exit(2);
   }
-  const reason = blockedReason(event);
   if (reason) {
     console.error(reason);
     process.exit(2);

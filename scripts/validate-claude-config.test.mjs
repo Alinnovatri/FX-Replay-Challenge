@@ -130,11 +130,21 @@ test('env-guard blocks .env files and allows .env.example', () => {
     { tool_name: 'Bash', tool_input: { command: 'cat .e\\nv' } },
     { tool_name: 'Glob', tool_input: { pattern: '.e*' } },
     { tool_name: 'Grep', tool_input: { pattern: 'KEY', glob: '.*' } },
+    { tool_name: 'Bash', tool_input: { command: `cat ${E} [z-a]` } },
+    { tool_name: 'Bash', tool_input: { command: 'cat [z-a]' } },
+    { tool_name: 'Bash', tool_input: { command: 'cat .{e,x}nv' } },
+    { tool_name: 'Bash', tool_input: { command: 'cat .e{n,}v' } },
+    { tool_name: 'Bash', tool_input: { command: 'cat .[e]nv.test' } },
+    { tool_name: 'Bash', tool_input: { command: 'cat ?env.staging' } },
+    { tool_name: 'Bash', tool_input: { command: 'cat ?env.production.local' } },
+    { tool_name: 'Bash', tool_input: { command: "cat .e$'n'v" } },
   ];
   const allowed = [
     { tool_name: 'Read', tool_input: { file_path: `/repo/${E}.example` } },
     { tool_name: 'Bash', tool_input: { command: `cp ${E}.example /tmp/x` } },
     { tool_name: 'Bash', tool_input: { command: 'ls *' } },
+    { tool_name: 'Bash', tool_input: { command: 'echo {a,b}.txt' } },
+    { tool_name: 'Bash', tool_input: { command: 'ls .github/ .nvmrc .editorconfig .eslintrc' } },
     { tool_name: 'Glob', tool_input: { pattern: '**/*.ts' } },
     { tool_name: 'Grep', tool_input: { pattern: `\\${E}` } },
     { tool_name: 'Read', tool_input: { file_path: '/repo/.gitignore' } },
@@ -158,4 +168,9 @@ test('env-guard exits 2 as a process, also through a symlinked dir and a path wi
     assert.equal(spawnSync(process.execPath, [hook], { input: allowed }).status, 0, hook);
   }
   assert.equal(spawnSync(process.execPath, [join(ROOT, '.claude/hooks/env-guard.mjs')], { input: 'not json' }).status, 2);
+  // A glob that can't be compiled must fail closed (exit 2), not crash with exit 1.
+  const invalidGlob = JSON.stringify({ tool_name: 'Bash', tool_input: { command: `cat ${E} [z-a]` } });
+  assert.equal(spawnSync(process.execPath, [join(ROOT, '.claude/hooks/env-guard.mjs')], { input: invalidGlob }).status, 2);
+  const hugeBraces = JSON.stringify({ tool_name: 'Bash', tool_input: { command: 'echo ' + '{a,b}'.repeat(12) } });
+  assert.equal(spawnSync(process.execPath, [join(ROOT, '.claude/hooks/env-guard.mjs')], { input: hugeBraces }).status, 2);
 });
