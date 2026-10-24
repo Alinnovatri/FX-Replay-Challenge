@@ -47,6 +47,19 @@ test servers); nothing else is needed.
 | Lighthouse CI (median of 3, mobile, devtools throttling) | `pnpm lhci` | Starts the built app on port 3300; budgets in `lighthouserc.cjs` |
 | Smoke test of a deployment | `BASE_URL=https://<deployment> pnpm smoke` | Read-only; creates no users |
 
+## Users API
+
+Contract: [src/contracts/users.ts](src/contracts/users.ts); decisions and error codes: ADR-004 in
+[docs/DECISIONS.md](docs/DECISIONS.md#adr-004-users-api-contract).
+
+| Method and path | Auth | Success | Errors |
+| --- | --- | --- | --- |
+| `POST /users` with `{ "email" }` | None; optional `Idempotency-Key` (UUID) | `201 { user }` and the `__Host-fxr_profile` cookie | 400, 409 `EMAIL_TAKEN`, 409 `IDEMPOTENCY_CONFLICT`, 500 |
+| `PATCH /users/:id` with profile fields | Self-service cookie (same id, no email) or `Authorization: Bearer <ADMIN_TOKEN>` | `200 { user }` | 400, 401, 403, 404, 409, 500 |
+| `GET /users?limit=&cursor=` | `Authorization: Bearer <ADMIN_TOKEN>` | `200 { users, nextCursor }` | 400, 401, 500 |
+
+Errors share one shape: `{ "error": { "code", "message", "requestId", "fields"? } }`.
+
 ## Database and migrations
 
 - Schema: `src/db/schema.ts`. Migrations: `drizzle/`, generated with `pnpm db:generate` and never edited after

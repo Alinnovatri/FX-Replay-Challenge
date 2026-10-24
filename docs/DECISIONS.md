@@ -43,7 +43,8 @@ experiment are evaluated on the server.
 
 ## ADR-004: Users API contract
 
-**Status:** proposed (finalised in Stage 3; signup fields refined with the signup skill in Stage 4).
+**Status:** accepted (2026-10-24, Stage 3; signup fields may still be refined with the signup skill in
+Stage 4). Implementation notes are at the end of this ADR.
 
 | Endpoint | Auth | Success | Notes |
 | --- | --- | --- | --- |
@@ -66,6 +67,35 @@ Errors share one shape: `{ "error": { "code", "message", "requestId", "fields"? 
 The brief names 400/404/409/500; 401 and 403 are added because protected endpoints need them.
 `GET /api/health` is an operational endpoint, not part of the Users API, and is exempt from this shape: it
 returns `{ status, db }` with 200, or 503 when the database is unreachable (added 2026-10-24, Stage 2).
+
+**Implementation (Stage 3):**
+
+- Contract in `src/contracts/users.ts` (`zod/mini`, shared with the signup form). Strict objects: unknown fields
+  are a 400 with `fields.<name> = "Unknown field"`. Email is trimmed and lower-cased before validation and
+  before the unique index, so case variants are duplicates.
+- Profile fields: `firstName` (1 to 50 characters), `experienceLevel` (`beginner`, `intermediate`,
+  `advanced`, also a database CHECK) and `markets` (subset of the markets in ASSUMPTIONS A-003).
+- Self-service cookie `__Host-fxr_profile`: HMAC-SHA256 over `{uid, exp}` with `SESSION_SECRET`; HttpOnly,
+  Secure, SameSite=Strict, `Path=/` (required by the `__Host-` prefix), `Max-Age=1800`. Missing, tampered or
+  expired: 401. Another id, or `email` in the body: 403.
+- Admin token: `Authorization: Bearer <ADMIN_TOKEN>`, compared in constant time over SHA-256 digests. A missing
+  `ADMIN_TOKEN` or `SESSION_SECRET` is a 500 whose log names the setting; there is no default.
+- Idempotency: `Idempotency-Key` (UUID) on `POST /users` stores the 201 in `idempotency_keys`. A retry with the
+  same key and body within 30 minutes (the cookie lifetime) replays it, with `Idempotent-Replayed: true`, the
+  same `Location` and no second `user_signed_up`. After 30 minutes the key is ignored, so it can't keep minting
+  profile cookies; expired keys are pruned. Neon's HTTP driver has no interactive transactions, so the user
+  insert and the key insert are two statements, with two accepted gaps: if storing the key fails, the request
+  still returns 201 and logs `idempotency_store_failed` (a later retry gets 409 `EMAIL_TAKEN`); and when two
+  retries with the same key race, the loser replays the winner's response only if the winner has already
+  stored it, otherwise it gets 409 `EMAIL_TAKEN`. PGlite serialises queries, so the race is not reproduced in
+  tests. Reserving the key before the insert is the next step.
+- Bodies are read with a 10,000-byte cap (declared `Content-Length` or streamed); larger bodies are a 400.
+- A cookie holder sending `email` gets 403 whatever its value; the check runs before validation.
+- A malformed id in `PATCH /users/:id` is a 404, the same as an unknown id.
+- `user_signed_up` is tracked after the insert returns; `profile_completed` after a self-service PATCH.
+  Analytics failures are logged and never fail the request.
+- `GET /users`: keyset pagination on `(created_at, id)`, newest first, `limit` 1 to 100 (default 20),
+  opaque `nextCursor`.
 
 **Risk:** a 409 on duplicate email tells a caller that an address is registered (account enumeration).
 The brief requires the 409; rate limiting in Stage 7 limits probing, and the risk is documented in SECURITY.

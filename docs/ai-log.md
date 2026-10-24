@@ -190,3 +190,40 @@ scripts 137,114 B; `pnpm audit --prod` no known vulnerabilities. Ports 3200 and 
   stage multiplied preview resources; the consequence only showed on the next human PR.
 
 **End:** recorded in the stage report from `date`.
+
+## Stage 3: Users API (2026-10-24)
+
+**Start:** 02:22:51 (UTC-6), from `date`.
+
+**Delegated:** contract, migration, auth (admin token and signed cookie), idempotency, route handlers, 16
+integration tests, docs.
+
+**Judgement calls:** `zod/mini` schemas shared with the browser; email normalised before the unique index;
+`__Host-` cookie prefix (forces `Path=/`, Secure, no Domain); keyset pagination; a malformed id returns 404 like
+an unknown id; analytics failures are logged, never fail the request; idempotency without a transaction because
+Neon's HTTP driver has none (risk recorded in ADR-004).
+
+**Validation:** `pnpm test` 21 of 21 (16 new: 201 with cookie attributes and one conversion event; duplicate 409,
+case-insensitive; 400 with per-field messages and unknown fields; malformed JSON and missing content type;
+idempotent replay without a second event; key reuse conflict; 500 logging class and SQLSTATE without the
+email; admin-only GET with keyset pages; cookie PATCH; cookie forbidden on email and on another id; missing,
+tampered and expired cookies; admin email change, 409 and 404; invalid values; missing `ADMIN_TOKEN` fails
+loudly). `pnpm typecheck` clean, `pnpm lint` 0 issues, `pnpm build` lists `/users` and `/users/[id]`.
+
+**Reviews: both FAIL, all findings fixed.**
+
+- `security-reviewer` (1 major, 4 minor). Major: an `Idempotency-Key` replay re-issued a fresh 30-minute
+  profile cookie forever, so a leaked key became a long-lived credential. Fixed: replays only within 30 minutes,
+  expired keys pruned, test proves an old key issues no cookie. Minors fixed: token parsing can't throw into a
+  500 and rejects extra segments; cursors validate UUID and timestamp before Postgres; bodies read with a byte
+  cap; cursor precision (below).
+- `code-reviewer` (1 blocker, 3 major, 5 minor). Blocker, reproduced by the agent: the cursor used
+  `toISOString()` (milliseconds) against microsecond `timestamptz`, so rows created within the same millisecond
+  were skipped. Claude's pagination test missed it because each insert landed in a different millisecond. Fixed
+  with a full-precision cursor and a test with sub-millisecond timestamps. Also fixed: `user_signed_up` now
+  fires before the idempotency record is stored, and a storage failure no longer turns a created account into
+  a 500 (test uses a trigger, after a first attempt that dropped the table broke the lookup too); a throwing
+  analytics sink is tested; cookie `email` is 403 before validation; replays carry `Location`. The concurrent
+  retry window is documented in ADR-004 instead of fixed.
+
+**Validation after fixes:** `pnpm test` 26 of 26; `pnpm typecheck` clean; `pnpm lint` 0 issues.
