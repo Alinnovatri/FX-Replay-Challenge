@@ -4,3 +4,10 @@ node_modules/
 .DS_Store
 private/
 .playwright-mcp/
+.next/
+.pglite/
+.lighthouseci/
+playwright-report/
+test-results/
+*.tsbuildinfo
+next-env.d.ts

@@ -1,0 +1,20 @@
+@import 'tailwindcss';
+@import '../../brand/generated/tokens.css';
+
+@theme inline {
+  --color-bg-primary: var(--bg-primary);
+  --color-bg-secondary: var(--bg-secondary);
+  --color-text-primary: var(--text-primary);
+  --color-text-secondary: var(--text-secondary);
+  --color-btn-primary: var(--btn-bg-primary-active);
+  --color-btn-primary-hover: var(--btn-bg-primary-hover);
+  --color-btn-text: var(--btn-text);
+  --font-display: var(--font-lato), var(--font-display);
+  --font-body: var(--font-nunito), var(--font-body);
+}
+
+body {
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: var(--font-nunito), var(--font-body);
+}
