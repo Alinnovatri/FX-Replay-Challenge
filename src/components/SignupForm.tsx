@@ -1,6 +1,6 @@
 'use client';
 
-import { useId, useRef, useState, type FormEvent } from 'react';
+import { useEffect, useId, useRef, useState, type FormEvent } from 'react';
 import { createUserSchema } from '@/contracts/users';
 import { createUser, type ApiResult } from '@/lib/api';
 import type { User } from '@/contracts/users';
@@ -48,8 +48,15 @@ export function SignupForm() {
   // One key per signup attempt: a retry after a timeout replays the same request instead of creating twice.
   const attempt = useRef<{ email: string; key: string } | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const submitRef = useRef<HTMLButtonElement>(null);
   const formErrorRef = useRef<HTMLParagraphElement>(null);
   const successRef = useRef<HTMLHeadingElement>(null);
+  // Focus moves after React commits the new state, so the target always exists when focused.
+  const [focusTarget, setFocusTarget] = useState<'success' | 'formError' | null>(null);
+  useEffect(() => {
+    if (focusTarget === 'success') successRef.current?.focus();
+    if (focusTarget === 'formError') formErrorRef.current?.focus();
+  }, [focusTarget, formError]);
 
   async function submit(event?: FormEvent) {
     event?.preventDefault();
@@ -67,13 +74,14 @@ export function SignupForm() {
     setStatus('submitting');
     setFieldError(null);
     setFormError(null);
+    setFocusTarget(null);
     const result = await createUser(normalised, attempt.current.key);
     inFlight.current = false;
 
     if (result.ok) {
       setUser(result.data.user);
       setStatus('success');
-      requestAnimationFrame(() => successRef.current?.focus());
+      setFocusTarget('success');
       return;
     }
     const message = messageFor(result);
@@ -84,7 +92,7 @@ export function SignupForm() {
       inputRef.current?.focus();
     } else {
       setFormError(message.form ?? COPY.failed);
-      requestAnimationFrame(() => formErrorRef.current?.focus());
+      setFocusTarget('formError');
     }
   }
 
@@ -95,7 +103,7 @@ export function SignupForm() {
           id={`${ids.status}-title`}
           ref={successRef}
           tabIndex={-1}
-          className="font-heading text-2xl font-bold outline-none"
+          className="font-heading text-2xl font-bold focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
         >
           Your free account is ready
         </h2>
@@ -139,6 +147,7 @@ export function SignupForm() {
         ) : null}
       </p>
       <button
+        ref={submitRef}
         type="submit"
         aria-disabled={busy || undefined}
         aria-busy={busy || undefined}
@@ -146,27 +155,34 @@ export function SignupForm() {
       >
         {busy ? 'Creating your account…' : 'Try FX Replay Free'}
       </button>
-      <div aria-live="polite" className="min-h-6">
-        {formError ? (
+      {/* Announces progress; the visible label change alone isn't announced unless the button has focus. */}
+      <p role="status" className="sr-only">
+        {busy ? 'Creating your account…' : ''}
+      </p>
+      {formError ? (
+        <div className="flex flex-wrap items-center gap-3">
+          {/* Focused when it appears, which announces it; no live region, so it isn't read twice. */}
           <p
             ref={formErrorRef}
             tabIndex={-1}
-            className="flex flex-wrap items-center gap-3 text-sm text-error-text outline-none"
+            className="text-sm text-error-text focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
           >
-            <span>
-              <span aria-hidden="true">⚠ </span>
-              {formError}
-            </span>
-            <button
-              type="button"
-              onClick={() => submit()}
-              className="min-h-11 rounded-full border border-input-border px-4 font-bold text-text-primary"
-            >
-              Try again
-            </button>
+            <span aria-hidden="true">⚠ </span>
+            {formError}
           </p>
-        ) : null}
-      </div>
+          <button
+            type="button"
+            onClick={() => {
+              // Keep focus on a stable control: this button unmounts when the retry clears the error.
+              submitRef.current?.focus();
+              void submit();
+            }}
+            className="min-h-11 rounded-full border border-input-border px-4 font-bold text-text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+          >
+            Try again
+          </button>
+        </div>
+      ) : null}
       <p id={ids.note} className="text-sm text-text-secondary">
         Free plan. No credit card required. By submitting this form, you confirm that you have read and agree to FX
         Replay&apos;s{' '}

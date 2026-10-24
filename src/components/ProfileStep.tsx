@@ -1,6 +1,6 @@
 'use client';
 
-import { useId, useRef, useState, type FormEvent } from 'react';
+import { useEffect, useId, useRef, useState, type FormEvent } from 'react';
 import { EXPERIENCE_LEVELS, MARKETS, profileUpdateSchema } from '@/contracts/users';
 import { updateProfile } from '@/lib/api';
 
@@ -27,6 +27,10 @@ export function ProfileStep({ userId }: { userId: string }) {
   const [error, setError] = useState<string | null>(null);
   const inFlight = useRef(false);
   const doneRef = useRef<HTMLParagraphElement>(null);
+  // Focus moves after React commits the confirmation, so the target always exists.
+  useEffect(() => {
+    if (status === 'saved' || status === 'skipped') doneRef.current?.focus();
+  }, [status]);
 
   async function save(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -55,7 +59,6 @@ export function ProfileStep({ userId }: { userId: string }) {
     inFlight.current = false;
     if (result.ok) {
       setStatus('saved');
-      requestAnimationFrame(() => doneRef.current?.focus());
     } else {
       setStatus('error');
       setError(
@@ -68,7 +71,11 @@ export function ProfileStep({ userId }: { userId: string }) {
 
   if (status === 'saved' || status === 'skipped') {
     return (
-      <p ref={doneRef} tabIndex={-1} className="text-text-secondary outline-none">
+      <p
+        ref={doneRef}
+        tabIndex={-1}
+        className="text-text-secondary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+      >
         {status === 'saved' ? 'Profile saved. Thanks.' : 'No problem. You can add these details later.'}
       </p>
     );
@@ -140,7 +147,6 @@ export function ProfileStep({ userId }: { userId: string }) {
           onClick={() => {
             if (inFlight.current) return; // a save is in flight; let it finish
             setStatus('skipped');
-            requestAnimationFrame(() => doneRef.current?.focus());
           }}
           className="min-h-12 rounded-full border border-input-border px-6 font-bold focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
         >
