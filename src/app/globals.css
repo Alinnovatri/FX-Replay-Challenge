@@ -14,6 +14,7 @@
   --color-link: var(--color-blue-400);
   --color-focus: var(--color-blue-400);
   --color-input-border: var(--btn-border-outline);
+  --color-bg-tertiary: var(--bg-tertiary);
   /* Distinct names: the generated tokens own --font-display and --font-body. */
   --font-heading: var(--font-lato), var(--font-display);
   --font-copy: var(--font-nunito), var(--font-body);
@@ -59,12 +60,15 @@ html {
     transform: none;
   }
 }
-@supports (animation-timeline: view()) {
-  /* Transform only: a half-faded section would fail text contrast while it scrolls in. */
-  .on-scroll {
-    animation: rise linear both;
-    animation-timeline: view();
-    animation-range: entry 0% cover 25%;
+/* Only for visitors without a reduced-motion preference: a scroll timeline ignores animation-duration. */
+@media (prefers-reduced-motion: no-preference) {
+  @supports (animation-timeline: view()) {
+    /* Transform only: a half-faded section would fail text contrast while it scrolls in. */
+    .on-scroll {
+      animation: rise linear both;
+      animation-timeline: view();
+      animation-range: entry 0% cover 25%;
+    }
   }
 }
 
@@ -114,7 +118,7 @@ html {
 }
 .card:hover {
   transform: translateY(-3px);
-  border-color: var(--color-blue-400);
+  border-color: var(--border-brand);
 }
 
 /* Signup steps: progress fill and the step that enters. */
@@ -140,6 +144,7 @@ details[open] .chevron {
   *::after {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
+    animation-delay: 0s !important;
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
   }

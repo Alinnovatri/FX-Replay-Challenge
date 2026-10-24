@@ -41,9 +41,21 @@ function messageFor(result: Exclude<ApiResult<unknown>, { ok: true }>): {
  * Email signup. Used alone (control) or as the last step of the quiz-first variant, which passes the answers it
  * collected and a Back handler.
  */
-export function SignupForm({ answers, onBack }: { answers?: SignupAnswers; onBack?: () => void } = {}) {
+export function SignupForm({
+  answers,
+  onBack,
+  initialEmail = '',
+  onEmailChange,
+  onSuccess,
+}: {
+  answers?: SignupAnswers;
+  onBack?: () => void;
+  initialEmail?: string;
+  onEmailChange?: (email: string) => void;
+  onSuccess?: () => void;
+} = {}) {
   const ids = { email: useId(), error: useId(), status: useId(), note: useId() };
-  const [email, setEmail] = useState('');
+  const [email, setEmail] = useState(initialEmail);
   const [fieldError, setFieldError] = useState<string | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
   const [status, setStatus] = useState<Status>('idle');
@@ -86,6 +98,7 @@ export function SignupForm({ answers, onBack }: { answers?: SignupAnswers; onBac
     if (result.ok) {
       setUser(result.data.user);
       setStatus('success');
+      onSuccess?.();
       setFocusTarget('success');
       return;
     }
@@ -112,6 +125,11 @@ export function SignupForm({ answers, onBack }: { answers?: SignupAnswers; onBac
         >
           Your free account is ready
         </h2>
+        {/* A-004: be clear about what this account is, right after the conversion. */}
+        <p className="text-sm text-text-secondary">
+          This account was created for the FX Replay Growth Engineer challenge. It does not sign you in to the FX Replay
+          app.
+        </p>
         <ProfileStep userId={user.id} {...(answers ? { only: 'firstName' as const } : {})} />
       </section>
     );
@@ -136,6 +154,7 @@ export function SignupForm({ answers, onBack }: { answers?: SignupAnswers; onBac
         value={email}
         onChange={(e) => {
           setEmail(e.target.value);
+          onEmailChange?.(e.target.value);
           if (fieldError) setFieldError(null);
         }}
         onBlur={() => email && setFieldError(validate(email))}

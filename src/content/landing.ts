@@ -5,7 +5,8 @@ export const hero = {
   eyebrow: 'Backtesting and trading practice',
   // Adapted from "Test it before you trust it." (fxreplay.com)
   title: 'Test your strategy on real market data before you trust it',
-  // Replay on real historical data and review trades (fxreplay.com); "no real money at stake" (meta description)
+  // PRODUCT_CONTEXT "What it does": replay real historical data, practise execution, review every trade,
+  // without risking real money (fxreplay.com FAQ and meta description)
   subtitle:
     'Replay historical price action, practise your entries and exits, and review every trade with no real money at stake.',
   // "Over 1 million traders have used it" (fxreplay.com FAQ)
@@ -13,8 +14,8 @@ export const hero = {
 };
 
 export const problem = {
-  title: 'A strategy you have not tested is a guess',
-  // "go live knowing how it behaved" (fxreplay.com)
+  // PRODUCT_CONTEXT "Core problem": traders go live on a strategy they have not tested (gut feeling vs real data)
+  title: 'Going live on a gut feeling is the risk',
   body: 'Replay it on real historical data, see how it behaved, and keep a record of every decision before you put money behind it.',
 };
 
@@ -28,7 +29,8 @@ export const plan = {
 };
 
 export const features = {
-  title: 'Practise with the tools traders use to prepare',
+  // PRODUCT_CONTEXT "Key differentiators": replay, journal and prop firm simulation in one product
+  title: 'Replay, journal and prop firm rules in one place',
   // "120+ assets across 6 markets with real historical data" (fxreplay.com)
   coverage: '120+ assets across 6 markets, with real historical data.',
   items: [
@@ -50,7 +52,7 @@ export const faq = {
     {
       q: 'Is FX Replay really free?',
       // fxreplay.com/pricing FAQ
-      a: 'Yes. The free plan needs no credit card, has no trial period and does not switch to a paid plan on its own. It includes core backtesting features.',
+      a: 'Yes. The free plan has no end date and needs no credit card. It includes core backtesting features.',
     },
     {
       q: 'Do I need to know how to code?',
@@ -71,7 +73,7 @@ export const finalCta = {
 };
 
 export const footer = {
-  // Paraphrased from the risk and educational disclosure in the fxreplay.com footer
+  // Paraphrased from the risk and educational disclosure in the fxreplay.com footer (A-003), and linked below
   disclosure:
     'FX Replay is a backtesting and educational platform. It is not a broker and does not execute real trades. Trading involves substantial risk, and past performance of any strategy or backtest does not guarantee future results.',
   note: 'Built for the FX Replay Growth Engineer challenge.',

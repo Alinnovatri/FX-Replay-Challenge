@@ -76,7 +76,7 @@ export function ProfileStep({ userId, only }: { userId: string; only?: 'firstNam
         tabIndex={-1}
         className="text-text-secondary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
       >
-        {status === 'saved' ? 'Profile saved. Thanks.' : 'No problem. You can add these details later.'}
+        {status === 'saved' ? 'Profile saved. Thanks.' : 'No problem. Your account is created.'}
       </p>
     );
   }

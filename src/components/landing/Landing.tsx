@@ -1,6 +1,6 @@
 import Image from 'next/image';
 import type { ReactNode } from 'react';
-import { CTA_LABEL, faq, features, finalCta, footer, hero, plan, problem, meta, SITE_URL } from '@/content/landing';
+import { CTA_LABEL, faq, features, finalCta, footer, hero, plan, problem, meta } from '@/content/landing';
 
 const cta =
   'lift inline-flex min-h-12 items-center justify-center rounded-full bg-btn-primary px-6 font-heading font-bold text-btn-text hover:bg-btn-primary-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus';
@@ -13,7 +13,8 @@ const jsonLd = {
   applicationCategory: 'FinanceApplication',
   operatingSystem: 'Web browser',
   description: meta.description,
-  url: SITE_URL,
+  // The app lives at fxreplay.com; this page only promotes it (A-004).
+  url: 'https://fxreplay.com/',
   offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD', description: 'Free plan, no credit card required' },
 };
 
@@ -152,7 +153,12 @@ export function Landing({ signup }: { signup: ReactNode }) {
 
       <footer className="border-t border-input-border">
         <div className="mx-auto flex max-w-6xl flex-col gap-3 px-4 py-10 text-sm text-text-secondary">
-          <p>{footer.disclosure}</p>
+          <p>
+            {footer.disclosure}{' '}
+            <a className="text-link underline" href="https://fxreplay.com/">
+              Full risk disclosure on fxreplay.com
+            </a>
+          </p>
           <p>
             {footer.note}{' '}
             <a className="text-link underline" href="https://fxreplay.com/">
