@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
 
-for (const path of ['/', '/variants/quiz']) {
+for (const path of ['/', '/variants/quiz', '/variants/control']) {
   test(`${path}: one h1, the signup form above the fold, no axe violations, no horizontal scroll`, async ({ page }) => {
     await page.goto(path);
     await expect(page.locator('h1')).toHaveCount(1);
@@ -105,4 +105,28 @@ test('?fxr_variant=quiz serves the quiz at / without changing the URL', async ({
   await page.goto('/?fxr_variant=quiz');
   await expect(page.getByRole('progressbar')).toBeVisible();
   expect(new URL(page.url()).pathname).toBe('/');
+});
+
+test('/variants/control always serves the email-first arm and pins it', async ({ browser }) => {
+  const context = await browser.newContext({
+    storageState: { cookies: [], origins: [] },
+    extraHTTPHeaders: { 'x-fxr-test': '1' },
+  });
+  const page = await context.newPage();
+  await page.goto('/variants/control');
+  await expect(page.getByLabel('Email')).toBeVisible();
+  await expect(page.getByRole('progressbar')).toHaveCount(0);
+  expect((await context.cookies()).find((c) => c.name === '__Host-fxr_variant')?.value).toBe('control');
+  await context.close();
+});
+
+test('product screenshots load with explicit sizes and lazy loading below the fold', async ({ page }) => {
+  await page.goto('/');
+  const images = page.locator('main img');
+  await expect(images).toHaveCount(3);
+  for (const img of await images.all()) {
+    await img.scrollIntoViewIfNeeded();
+    await expect(img).toHaveAttribute('width', /\d+/);
+    await expect.poll(() => img.evaluate((el) => (el as HTMLImageElement).naturalWidth)).toBeGreaterThan(0);
+  }
 });

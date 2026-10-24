@@ -94,9 +94,18 @@ describe('POST /users', () => {
   });
 
   it('saves quiz answers sent with the signup', async () => {
-    const res = await post({ email: 'quiz@example.test', experienceLevel: 'beginner', markets: ['forex', 'metals'] });
+    const res = await post({
+      email: 'quiz@example.test',
+      firstName: ' Ana ',
+      experienceLevel: 'beginner',
+      markets: ['forex', 'metals'],
+    });
     expect(res.status).toBe(201);
-    expect((await res.json()).user).toMatchObject({ experienceLevel: 'beginner', markets: ['forex', 'metals'] });
+    expect((await res.json()).user).toMatchObject({
+      firstName: 'Ana',
+      experienceLevel: 'beginner',
+      markets: ['forex', 'metals'],
+    });
     expect((await post({ email: 'bad@example.test', experienceLevel: 'expert' })).status).toBe(400);
   });
 

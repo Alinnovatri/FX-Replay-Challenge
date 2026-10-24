@@ -24,14 +24,20 @@ const emailField = (page: Page) => page.getByLabel('Email');
 const submit = (page: Page) => page.getByRole('button', { name: /Try FX Replay Free|Creating your account/ });
 
 test('signs up, completes the optional profile, with no axe violations in any state', async ({ page }) => {
+  const bodies: Record<string, unknown>[] = [];
+  page.on('request', (req) => {
+    if (req.method() === 'POST' && new URL(req.url()).pathname === '/users') bodies.push(req.postDataJSON());
+  });
   await page.goto('/#signup');
   await expectNoAxeViolations(page);
+  await page.getByLabel(/First name/).fill('Ana');
   await emailField(page).fill(uniqueEmail('happy'));
   await submit(page).click();
   await expect(page.getByRole('heading', { name: 'Your free account is ready' })).toBeFocused();
   await expectNoAxeViolations(page);
 
-  await page.getByLabel(/First name/).fill('Ana');
+  expect(bodies[0]).toMatchObject({ firstName: 'Ana' });
+  await expect(page.getByLabel(/First name/)).toHaveCount(0);
   await page.getByRole('radio', { name: 'Beginner' }).check();
   await page.getByRole('checkbox', { name: 'Forex' }).check();
   await page.getByRole('button', { name: 'Save profile' }).click();
