@@ -61,3 +61,47 @@ test('reduced motion also stops the scroll-driven section animation', async ({ p
     .evaluate((el) => getComputedStyle(el).animationName);
   expect(name).toBe('none');
 });
+
+test('the landing sends landing_viewed and cta_clicked to the relay, tagged as test traffic', async ({ page }) => {
+  const sent: { name: string; props: Record<string, unknown> }[] = [];
+  const statuses: number[] = [];
+  page.on('request', (req) => {
+    if (new URL(req.url()).pathname === '/api/e') sent.push(req.postDataJSON());
+  });
+  page.on('response', (res) => {
+    if (new URL(res.url()).pathname === '/api/e') statuses.push(res.status());
+  });
+  await page.goto('/');
+  await expect.poll(() => sent.map((e) => e.name)).toContain('landing_viewed');
+  await page.getByRole('link', { name: 'Try FX Replay Free' }).first().click();
+  await expect.poll(() => sent.map((e) => e.name)).toContain('cta_clicked');
+  expect(sent.find((e) => e.name === 'cta_clicked')?.props).toEqual({ cta_id: 'header' });
+  await expect.poll(() => statuses.length).toBeGreaterThanOrEqual(2);
+  expect(statuses.every((s) => s === 204)).toBe(true);
+  const cookies = await page.context().cookies();
+  expect(cookies.find((c) => c.name === 'fxr_test')?.value).toBe('1');
+  expect(cookies.find((c) => c.name === 'fxr_aid')?.value).toMatch(/^[0-9a-f-]{36}$/);
+});
+
+test('a first visit without a variant cookie is assigned one and keeps it', async ({ browser }) => {
+  const context = await browser.newContext({
+    storageState: { cookies: [], origins: [] },
+    extraHTTPHeaders: { 'x-fxr-test': '1' },
+  });
+  const page = await context.newPage();
+  await page.goto('/');
+  const first = (await context.cookies()).find((c) => c.name === 'fxr_variant')?.value;
+  expect(['control', 'quiz']).toContain(first);
+  await page.reload();
+  expect((await context.cookies()).find((c) => c.name === 'fxr_variant')?.value).toBe(first);
+  // The URL never changes; the quiz is served at / through a rewrite.
+  expect(new URL(page.url()).pathname).toBe('/');
+  await expect(first === 'quiz' ? page.getByRole('progressbar') : page.getByLabel('Email')).toBeVisible();
+  await context.close();
+});
+
+test('?fxr_variant=quiz serves the quiz at / without changing the URL', async ({ page }) => {
+  await page.goto('/?fxr_variant=quiz');
+  await expect(page.getByRole('progressbar')).toBeVisible();
+  expect(new URL(page.url()).pathname).toBe('/');
+});

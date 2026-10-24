@@ -3,13 +3,14 @@ import { closeDbs, freshDb } from '../helpers/db';
 import type { PGlite } from '@electric-sql/pglite';
 import { GET, POST } from '@/app/users/route';
 import { PATCH } from '@/app/users/[id]/route';
-import { setSinkForTests, type ServerEvent } from '@/server/analytics';
+import { setSinkForTests, type CapturedEvent } from '@/server/analytics';
 import { PROFILE_COOKIE, signProfileToken } from '@/server/auth';
 import { setDbForTests, type Db } from '@/db/client';
 
 const BASE = 'https://app.test';
 const ADMIN = { authorization: 'Bearer test-admin-token' };
-const events: ServerEvent[] = [];
+const events: { name: string; userId?: unknown; fieldsCount?: unknown }[] = [];
+const captured: CapturedEvent[] = [];
 
 function post(body: unknown, headers: Record<string, string> = {}) {
   return POST(
@@ -49,8 +50,15 @@ let client: PGlite;
 beforeEach(async () => {
   ({ client } = await freshDb());
   events.length = 0;
+  captured.length = 0;
   setSinkForTests(async (event) => {
-    events.push(event);
+    captured.push(event);
+    const summary: { name: string; userId?: unknown; fieldsCount?: unknown } = {
+      name: event.event,
+      userId: event.properties.user_id,
+    };
+    if (event.properties.fields_count !== undefined) summary.fieldsCount = event.properties.fields_count;
+    events.push(summary);
   });
 });
 afterEach(async () => {
@@ -70,6 +78,19 @@ describe('POST /users', () => {
       expect(cookie).toContain(attribute);
     }
     expect(events).toEqual([{ name: 'user_signed_up', userId: user.id }]);
+  });
+
+  it('tags the conversion with the visitor id, variant and test flag', async () => {
+    const aid = '11111111-1111-4111-8111-111111111111';
+    await post({ email: 'real@trader.example' }, { cookie: `fxr_aid=${aid}; fxr_variant=quiz` });
+    expect(captured.at(-1)).toMatchObject({
+      event: 'user_signed_up',
+      distinctId: aid,
+      properties: { variant: 'quiz', is_test: false, source: 'server' },
+    });
+    await post({ email: 'smoke@example.test' });
+    expect(captured.at(-1)?.properties).toMatchObject({ is_test: true, variant: null });
+    expect(JSON.stringify(captured)).not.toContain('@');
   });
 
   it('saves quiz answers sent with the signup', async () => {

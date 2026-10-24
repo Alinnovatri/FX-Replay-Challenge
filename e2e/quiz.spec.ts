@@ -9,8 +9,11 @@ test('quiz-first: answers first, email last, with progress, back navigation and 
   page,
 }) => {
   const bodies: Record<string, unknown>[] = [];
+  const events: string[] = [];
   page.on('request', (req) => {
-    if (req.method() === 'POST' && new URL(req.url()).pathname === '/users') bodies.push(req.postDataJSON());
+    const path = new URL(req.url()).pathname;
+    if (req.method() === 'POST' && path === '/users') bodies.push(req.postDataJSON());
+    if (path === '/api/e') events.push((req.postDataJSON() as { name: string }).name);
   });
   await page.goto('/variants/quiz');
   await expect(progress(page)).toHaveAttribute('aria-valuenow', '1');
@@ -42,6 +45,9 @@ test('quiz-first: answers first, email last, with progress, back navigation and 
 
   await expect(page.getByRole('heading', { name: 'Your free account is ready' })).toBeFocused();
   expect(bodies[0]).toMatchObject({ experienceLevel: 'intermediate', markets: ['futures', 'metals'] });
+  await expect
+    .poll(() => events)
+    .toEqual(expect.arrayContaining(['signup_started', 'quiz_step_completed', 'signup_submitted']));
   await expect(page.getByRole('progressbar')).toHaveCount(0);
   // The answers are already saved, so the profile step only asks for a first name.
   await expect(page.getByRole('radio')).toHaveCount(0);
