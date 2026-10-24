@@ -4,8 +4,11 @@ A "Try FX Replay Free" landing page, a signup flow and a Users API, built to rai
 marketing traffic to account creation. Conversion is counted only when the server confirms the account.
 
 - Production: <https://fx-replay-challenge.vercel.app> (smoke: `BASE_URL=https://fx-replay-challenge.vercel.app pnpm smoke`).
-- Brief: [docs/brief.md](docs/brief.md). Plan and budgets: [docs/PLAN.md](docs/PLAN.md). Decisions:
-  [docs/DECISIONS.md](docs/DECISIONS.md). AI workflow log: [docs/ai-log.md](docs/ai-log.md).
+- Deliverables: [Architecture](docs/ARCHITECTURE.md), [Analytics plan](docs/ANALYTICS.md),
+  [Experiment](docs/EXPERIMENT.md), [AI-native workflow](docs/AI_WORKFLOW.md),
+  [Performance review](docs/PERFORMANCE.md), [Security](docs/SECURITY.md).
+- Working notes: [brief](docs/brief.md), [plan](docs/PLAN.md), [decisions](docs/DECISIONS.md),
+  [assumptions](docs/ASSUMPTIONS.md), [AI log](docs/ai-log.md).
 
 ## Requirements
 

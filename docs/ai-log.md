@@ -439,3 +439,44 @@ CLS 0, TBT 17 ms, HTML 7,048 B, scripts 163,631 B; `/variants/quiz` 0.99, 1, 1, 
 **Validation after fixes:** `pnpm test` 46 of 46; `pnpm e2e` 48 of 48, two consecutive runs; `pnpm lint` 0
 issues. `pnpm lhci`: `/` 0.99, 1, 1, LCP 1560 ms, CLS 0, TBT 16 ms, HTML 7,187 B, scripts 163,694 B;
 `/variants/quiz` 0.99, 1, 1, LCP 1557 ms, CLS 0, TBT 17 ms, HTML 7,505 B, scripts 165,956 B.
+
+**Production verification (after merging PR #19; the owner set `POSTHOG_PROJECT_KEY` in Vercel):** deployment
+READY. A tagged script (`x-fxr-test: 1`) visited `/` and received the three `__Host-` cookies (assigned arm:
+quiz), sent `landing_viewed` and `cta_clicked` (204 each), a foreign-origin event (403), and signed up
+`smoke+analytics-1792841070@example.test` (201). PostHog SQL through the MCP, last hour, that visitor id:
+`landing_viewed`, `cta_clicked` and `user_signed_up`, all `variant = quiz`, `is_test = true`, the conversion with
+`source = server` and `has_visitor_id = true`, `utm_source = verification` on the relay events. Privacy check on
+all events in the hour: 5 events, 0 containing `@` in their properties (two other `landing_viewed` events came
+from browser visits to the site). Data written to production: test user `smoke+analytics-1792841070@example.test`.
+
+**End:** 05:25:48, from `date`: 35 min (one stage over the 6-hour mark is the owner's decision, below).
+
+## Stage 8: Documentation (2026-10-24)
+
+**Start:** 05:25:48 (UTC-6). **Overrun:** the 6-hour wall-clock budget ended at 05:27:55, during this stage. The
+owner decided at 04:51 to finish Stages 6 and 8 in full past that point; everything from 05:27:55 on is overrun
+and is reported as such in the stage reports.
+
+**Delegated:** ARCHITECTURE (with a Mermaid diagram), SECURITY, PERFORMANCE and AI_WORKFLOW, written from the
+code, the ADRs and this log; README links to every deliverable.
+
+**Validation:** production headers and timing measured with `curl` for PERFORMANCE and SECURITY (HSTS present,
+no CSP or other security headers, `/` 6,383 B compressed, TTFB 0.25 s, CDN `HIT` on static assets); one claim
+in AI_WORKFLOW (the Neon branch limit) is marked as inferred, as it was never confirmed inside Neon.
+
+**Review: `code-reviewer` (docs against code): FAIL, fixed.** Claude's first version of this entry claimed every
+number in PERFORMANCE came from the log; several did not. Evidence now recorded here:
+
+- `curl -sI` on production `/`: `strict-transport-security: max-age=63072000; includeSubDomains; preload`;
+  `x-vercel-cache: PRERENDER` on the first request (05:27) and `HIT` on a later one (05:31).
+- Stage 6 Lighthouse reports (`.lighthouseci/lhr-*.json`, 6 runs, read with a script): third-party bytes 0 on
+  every run; font transfer 112,660 B; unused-JavaScript savings 53,502 to 55,653 B; legacy-JavaScript savings
+  13,726 B; LCP element `div.mx-auto > div.flex > h1.font-heading` on all 6 runs.
+- Vercel API deployment record (`get_deployment`): `regions: ["iad1"]`. The Neon region was chosen at setup
+  (Washington, D.C.) and is not verified inside Neon.
+
+Other fixes: "the site serves several languages" was an unsourced fact about FX Replay (now `TODO(owner)`);
+retries are user-triggered in `SignupForm.tsx`, not in `api.ts`; `drizzle-kit push` is only denied to the agent,
+not guarded in code; reviewers with Bash are instructed, not prevented, from writing; "TBT under 20 ms" was false
+for Stage 4 (21 ms); the Twitter tags are emitted but not asserted; the quiz A/B is an owner decision on Claude's
+proposal, not an owner correction; `vercel env ls` was blocked by the classifier, not withdrawn by Claude.
