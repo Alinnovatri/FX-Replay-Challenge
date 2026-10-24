@@ -4,6 +4,7 @@ import { useEffect, useId, useRef, useState, type FormEvent } from 'react';
 import { EXPERIENCE_LEVELS, MARKETS } from '@/contracts/users';
 import type { SignupAnswers } from '@/lib/api';
 import { SignupForm } from './SignupForm';
+import { track } from '@/lib/track';
 
 // Quiz-first variant (ADR-011): two quick questions, then the email. Conversion is still the POST /users.
 const TOTAL_STEPS = 3;
@@ -39,6 +40,12 @@ export function QuizSignup() {
   const [error, setError] = useState<string | null>(null);
   const titleRef = useRef<HTMLHeadingElement>(null);
   const moved = useRef(false);
+  const started = useRef(false);
+  const start = () => {
+    if (started.current) return;
+    started.current = true;
+    track('signup_started', {});
+  };
 
   // Move focus to each new step's question (not on first render, so the page doesn't jump).
   useEffect(() => {
@@ -59,6 +66,7 @@ export function QuizSignup() {
       return;
     }
     setAnswers((a) => ({ ...a, experienceLevel: level as NonNullable<SignupAnswers['experienceLevel']> }));
+    track('quiz_step_completed', { step: 1 });
     go(2);
   }
 
@@ -75,6 +83,7 @@ export function QuizSignup() {
   function submitMarkets(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     saveMarkets(new FormData(event.currentTarget));
+    track('quiz_step_completed', { step: 2 });
     go(3);
   }
 
@@ -124,7 +133,10 @@ export function QuizSignup() {
             <fieldset
               className="flex flex-col gap-3"
               aria-describedby={error ? `${ids.title}-error` : undefined}
-              onChange={() => setError(null)}
+              onChange={() => {
+                start();
+                setError(null);
+              }}
               role="radiogroup"
               aria-invalid={error ? true : undefined}
             >

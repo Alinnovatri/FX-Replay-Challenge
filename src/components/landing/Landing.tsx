@@ -1,5 +1,6 @@
 import Image from 'next/image';
 import type { ReactNode } from 'react';
+import { PageView, TrackedLink } from './Tracking';
 import { CTA_LABEL, faq, features, finalCta, footer, hero, plan, problem, meta } from '@/content/landing';
 
 const cta =
@@ -22,6 +23,7 @@ const jsonLd = {
 export function Landing({ signup }: { signup: ReactNode }) {
   return (
     <>
+      <PageView />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       <a
         href="#signup"
@@ -39,9 +41,9 @@ export function Landing({ signup }: { signup: ReactNode }) {
           className="h-5 w-auto"
           unoptimized
         />
-        <a href="#signup" className={`${cta} min-h-11 px-5 text-sm`}>
+        <TrackedLink ctaId="header" href="#signup" className={`${cta} min-h-11 px-5 text-sm`}>
           {CTA_LABEL}
-        </a>
+        </TrackedLink>
       </header>
 
       <main>
@@ -145,9 +147,9 @@ export function Landing({ signup }: { signup: ReactNode }) {
         <section className="on-scroll mx-auto max-w-3xl px-4 py-20 text-center">
           <h2 className="font-heading text-3xl font-bold">{finalCta.title}</h2>
           <p className="mt-3 text-lg text-text-secondary">{finalCta.body}</p>
-          <a href="#signup" className={`${cta} mt-6`}>
+          <TrackedLink ctaId="final" href="#signup" className={`${cta} mt-6`}>
             {CTA_LABEL}
-          </a>
+          </TrackedLink>
         </section>
       </main>
 
