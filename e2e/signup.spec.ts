@@ -124,8 +124,10 @@ test('double-clicking submit sends one request', async ({ page }) => {
 
 test('the whole flow works with the keyboard only', async ({ page }) => {
   await page.goto('/');
-  await page.keyboard.press('Tab'); // the hero CTA link
-  await page.keyboard.press('Tab');
+  // Tab from the top: skip link, header CTA, then the email field in the hero form.
+  for (let i = 0; i < 6 && !(await emailField(page).evaluate((el) => el === document.activeElement)); i += 1) {
+    await page.keyboard.press('Tab');
+  }
   await expect(emailField(page)).toBeFocused();
   await page.keyboard.type(uniqueEmail('keyboard'));
   await page.keyboard.press('Enter');
