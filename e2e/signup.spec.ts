@@ -170,3 +170,14 @@ test('an empty email shows the required message', async ({ page }) => {
   await expect(page.locator('form [role="alert"]')).toContainText('Enter your email address');
   await expect(emailField(page)).toBeFocused();
 });
+
+test('signup_started fires once, on the first focus of the name field', async ({ page }) => {
+  const events: string[] = [];
+  page.on('request', (req) => {
+    if (new URL(req.url()).pathname === '/api/e') events.push((req.postDataJSON() as { name: string }).name);
+  });
+  await page.goto('/#signup');
+  await page.getByLabel(/First name/).focus();
+  await emailField(page).focus();
+  await expect.poll(() => events.filter((e) => e === 'signup_started')).toHaveLength(1);
+});

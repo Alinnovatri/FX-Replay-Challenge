@@ -54,7 +54,7 @@ also get `path` (same-origin path only) and `utm_source`, `utm_medium`, `utm_cam
 | --- | --- | --- | --- |
 | `landing_viewed` | Landing renders (`PageView`) | Relay | `referrer_domain`: hostname of `document.referrer`, null when absent or internal |
 | `cta_clicked` | A "Try FX Replay Free" link in the header or the final section | Relay | `cta_id`: `header` or `final` |
-| `signup_started` | First focus on the email field (control) or first answer in the quiz (variant) | Relay | none |
+| `signup_started` | First focus on the name or email field (control) or first answer in the quiz (variant) | Relay | none |
 | `signup_submitted` | A valid form is submitted (client validation passed) | Relay | none |
 | `signup_failed` | The API answers with an error, or the request times out or fails | Relay | `error_code`: `VALIDATION_FAILED`, `EMAIL_TAKEN`, `IDEMPOTENCY_CONFLICT`, `INTERNAL`, `TIMEOUT`, `NETWORK` |
 | `quiz_step_completed` | A quiz step is completed for the first time (variant only; going Back and resubmitting is not counted again) | Relay | `step`: 1 or 2 |

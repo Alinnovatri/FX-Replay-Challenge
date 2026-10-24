@@ -76,6 +76,12 @@ export function SignupForm({
   const [user, setUser] = useState<User | null>(null);
   const inFlight = useRef(false);
   const started = useRef(Boolean(answers));
+  // signup_started fires once, on the first focus of either field (name or email).
+  const markStarted = () => {
+    if (started.current) return;
+    started.current = true;
+    track('signup_started', {});
+  };
   // One key per signup attempt: a retry after a timeout replays the same request instead of creating twice.
   const attempt = useRef<{ fingerprint: string; key: string } | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -166,6 +172,7 @@ export function SignupForm({
         autoComplete="given-name"
         maxLength={50}
         value={firstName}
+        onFocus={markStarted}
         onChange={(e) => {
           setFirstName(e.target.value);
           onNameChange?.(e.target.value);
@@ -186,11 +193,7 @@ export function SignupForm({
         spellCheck={false}
         placeholder="you@example.com"
         value={email}
-        onFocus={() => {
-          if (started.current) return;
-          started.current = true;
-          track('signup_started', {});
-        }}
+        onFocus={markStarted}
         onChange={(e) => {
           setEmail(e.target.value);
           onEmailChange?.(e.target.value);
