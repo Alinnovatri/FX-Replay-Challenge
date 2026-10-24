@@ -82,14 +82,14 @@ describe('POST /users', () => {
 
   it('tags the conversion with the visitor id, variant and test flag', async () => {
     const aid = '11111111-1111-4111-8111-111111111111';
-    await post({ email: 'real@trader.example' }, { cookie: `fxr_aid=${aid}; fxr_variant=quiz` });
+    await post({ email: 'real@trader.example' }, { cookie: `__Host-fxr_aid=${aid}; __Host-fxr_variant=quiz` });
     expect(captured.at(-1)).toMatchObject({
       event: 'user_signed_up',
       distinctId: aid,
-      properties: { variant: 'quiz', is_test: false, source: 'server' },
+      properties: { variant: 'quiz', is_test: false, has_visitor_id: true, source: 'server' },
     });
     await post({ email: 'smoke@example.test' });
-    expect(captured.at(-1)?.properties).toMatchObject({ is_test: true, variant: null });
+    expect(captured.at(-1)?.properties).toMatchObject({ is_test: true, variant: null, has_visitor_id: false });
     expect(JSON.stringify(captured)).not.toContain('@');
   });
 
@@ -114,6 +114,7 @@ describe('POST /users', () => {
     const { error } = await res.json();
     expect(error.code).toBe('VALIDATION_FAILED');
     expect(error.fields).toMatchObject({ email: expect.any(String), name: 'Unknown field' });
+    expect(events).toHaveLength(0);
   });
 
   it('returns 400 for malformed JSON and a missing content type', async () => {
@@ -181,6 +182,7 @@ describe('POST /users', () => {
     const res = await post({ email: 'b@example.test' }, { 'idempotency-key': key });
     expect(res.status).toBe(409);
     expect((await res.json()).error.code).toBe('IDEMPOTENCY_CONFLICT');
+    expect(events).toHaveLength(1);
   });
 
   it('returns 500 with a generic message and logs only the error class and SQLSTATE', async () => {

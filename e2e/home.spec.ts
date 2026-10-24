@@ -76,11 +76,12 @@ test('the landing sends landing_viewed and cta_clicked to the relay, tagged as t
   await page.getByRole('link', { name: 'Try FX Replay Free' }).first().click();
   await expect.poll(() => sent.map((e) => e.name)).toContain('cta_clicked');
   expect(sent.find((e) => e.name === 'cta_clicked')?.props).toEqual({ cta_id: 'header' });
+  expect(sent.find((e) => e.name === 'landing_viewed')?.props).toEqual({ referrer_domain: null });
   await expect.poll(() => statuses.length).toBeGreaterThanOrEqual(2);
   expect(statuses.every((s) => s === 204)).toBe(true);
   const cookies = await page.context().cookies();
-  expect(cookies.find((c) => c.name === 'fxr_test')?.value).toBe('1');
-  expect(cookies.find((c) => c.name === 'fxr_aid')?.value).toMatch(/^[0-9a-f-]{36}$/);
+  expect(cookies.find((c) => c.name === '__Host-fxr_test')?.value).toBe('1');
+  expect(cookies.find((c) => c.name === '__Host-fxr_aid')?.value).toMatch(/^[0-9a-f-]{36}$/);
 });
 
 test('a first visit without a variant cookie is assigned one and keeps it', async ({ browser }) => {
@@ -90,10 +91,10 @@ test('a first visit without a variant cookie is assigned one and keeps it', asyn
   });
   const page = await context.newPage();
   await page.goto('/');
-  const first = (await context.cookies()).find((c) => c.name === 'fxr_variant')?.value;
+  const first = (await context.cookies()).find((c) => c.name === '__Host-fxr_variant')?.value;
   expect(['control', 'quiz']).toContain(first);
   await page.reload();
-  expect((await context.cookies()).find((c) => c.name === 'fxr_variant')?.value).toBe(first);
+  expect((await context.cookies()).find((c) => c.name === '__Host-fxr_variant')?.value).toBe(first);
   // The URL never changes; the quiz is served at / through a rewrite.
   expect(new URL(page.url()).pathname).toBe('/');
   await expect(first === 'quiz' ? page.getByRole('progressbar') : page.getByLabel('Email')).toBeVisible();

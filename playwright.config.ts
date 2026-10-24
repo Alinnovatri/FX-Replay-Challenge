@@ -33,9 +33,8 @@ export default defineConfig({
       PGLITE_DIR: DB,
       ADMIN_TOKEN: 'e2e-admin-token',
       SESSION_SECRET: 'e2e-session-secret',
-      // Fake key: the relay accepts events and the PostHog call fails and is logged; no event leaves the machine
-      // with a real key.
-      POSTHOG_PROJECT_KEY: 'phc_e2e_fake',
+      // Events stay on the machine: the relay validates and logs them instead of calling PostHog.
+      ANALYTICS_SINK: 'log',
     },
   },
 });

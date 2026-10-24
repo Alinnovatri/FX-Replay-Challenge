@@ -1,7 +1,7 @@
 {
   "cookies": [
     {
-      "name": "fxr_variant",
+      "name": "__Host-fxr_variant",
       "value": "control",
       "domain": "localhost",
       "path": "/",
