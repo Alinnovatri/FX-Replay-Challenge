@@ -170,7 +170,7 @@ export function SignupForm({
   return (
     <form onSubmit={submit} noValidate aria-describedby={ids.note} className="flex w-full max-w-md flex-col gap-3">
       <label htmlFor={ids.name} className="font-heading font-bold">
-        First name <span className="font-body font-normal text-text-secondary">(optional)</span>
+        First name <span className="font-copy font-normal text-text-secondary">(optional)</span>
       </label>
       <input
         id={ids.name}
@@ -269,7 +269,7 @@ export function SignupForm({
         </div>
       ) : null}
       <p id={ids.note} className="text-sm text-text-secondary">
-        Free plan. No credit card required. By submitting this form, you confirm that you have read and agree to FX
+        Free. No credit card required. By submitting this form, you confirm that you have read and agree to FX
         Replay&apos;s{' '}
         <a className="text-link underline" href="https://fxreplay.com/legal-regulatory/terms-conditions">
           Terms of Service
