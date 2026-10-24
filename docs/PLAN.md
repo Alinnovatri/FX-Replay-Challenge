@@ -55,8 +55,8 @@ documents link to that definition instead of restating it.
 ## Time budget
 
 Total 360 min, counted as wall-clock time from the first commit (owner, 2026-10-24); time before Stage 0
-(writing the brief) is included. Open assumption, pending the owner: pauses between work sessions are logged
-in `docs/ai-log.md` and not counted.
+(writing the brief) is included. The clock runs continuously, pauses included (owner, 2026-10-24), so the
+budget ends at **2026-10-24 05:27:55 (UTC-6)**. Owner review, merges and restarts consume the same clock.
 A stage that runs 50% over its budget stops and proposes cuts.
 
 | Stage | Budget | Acceptance criteria |
