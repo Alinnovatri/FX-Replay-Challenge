@@ -9,7 +9,7 @@
   },
   "scripts": {
     "dev": "DB_DRIVER=pglite PGLITE_DIR=.pglite node scripts/migrate.mjs && DB_DRIVER=pglite PGLITE_DIR=.pglite next dev",
-    "build": "next build",
+    "build": "DB_DRIVER=pglite PGLITE_DIR=memory:// next build",
     "start": "next start",
     "vercel-build": "node scripts/vercel-build.mjs",
     "lint": "eslint . --max-warnings=0 && prettier --check . && markdownlint-cli2",
@@ -17,11 +17,11 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "e2e": "playwright test",
-    "lhci": "lhci autorun",
+    "lhci": "DB_DRIVER=pglite PGLITE_DIR=memory:// lhci autorun",
     "smoke": "node scripts/smoke.mjs",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "node scripts/migrate.mjs",
-    "check:config": "node scripts/validate-claude-config.mjs && node scripts/brand/generate-tokens.mjs --check && node scripts/brand/contrast.mjs --check && node --test scripts/brand/brand.test.mjs scripts/validate-claude-config.test.mjs"
+    "check:config": "node scripts/validate-claude-config.mjs && node scripts/brand/generate-tokens.mjs --check && node scripts/brand/contrast.mjs --check && node --test scripts/brand/brand.test.mjs scripts/validate-claude-config.test.mjs scripts/vercel-build.test.mjs"
   },
   "dependencies": {
     "@electric-sql/pglite": "0.5.8",
