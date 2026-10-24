@@ -35,12 +35,15 @@ Facts we may use in copy, all read on 2026-10-24:
 | "Over 1 million traders have used it" | [fxreplay.com FAQ](https://fxreplay.com/) |
 | Signup notice, verbatim: "By submitting this form, I confirm that I have read and agree to FX Replay's Terms of Service and Privacy Policy". Our form uses it in the second person | [FX Replay signup](https://app.fxreplay.com/en-US/signup), read 2026-10-24 |
 | Terms of Service URL: `https://fxreplay.com/legal-regulatory/terms-conditions`; Privacy Policy URL: `https://fxreplay.com/legal-regulatory/privacy-policy` | Footer links on [fxreplay.com](https://fxreplay.com/), read 2026-10-24 |
+| Not a broker; does not execute real trades or facilitate live trading; does not handle client funds | Risk and educational disclosure in the [fxreplay.com](https://fxreplay.com/) footer, read 2026-10-24 |
+| Prices on the pricing page are in USD | [Pricing](https://fxreplay.com/pricing), read 2026-10-24 |
 | Not a broker; educational and backtesting platform only | [fxreplay.com footer disclosure](https://fxreplay.com/) |
 
 Not used: testimonials and their names (the site itself warns they "may not reflect typical results"),
 paid-plan prices, and the pricing headline about profitable trading (against our no-performance-promise
 rule). Copy that cites "1 million traders" quotes the site's wording and is reviewed by brand-copy-reviewer.
-The risk and CFTC Rule 4.41 disclosures from the footer are linked, not copied.
+The risk disclosure is paraphrased in our footer and linked to fxreplay.com, where it is published in full; the
+CFTC Rule 4.41 text is linked, not copied.
 
 ## A-004
 

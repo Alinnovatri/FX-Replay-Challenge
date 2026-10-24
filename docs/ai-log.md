@@ -346,3 +346,32 @@ free plan vs around testing before trusting.
 `pnpm lhci` medians (mobile, devtools, 3 runs each): `/` performance 1, accessibility 1, SEO 1, LCP 1540 ms,
 CLS 0, TBT 14 ms, HTML 6,696 B, scripts 163,201 B; `/variants/quiz` 0.99, 1, 1, LCP 1555 ms, CLS 0, TBT 16 ms,
 HTML 6,993 B, scripts 165,249 B. Ports 3200 and 3300 free afterwards.
+
+**Reviews:**
+
+- `perf-seo-auditor`: PASS. All budgets met on both pages; the LCP element is the `h1` in all 6 runs (text,
+  render delay only); no third-party bytes. Minors fixed: reduced motion now also stops the scroll-driven
+  animation; the OG card loads Lato 900 instead of the default font; JSON-LD `url` points at fxreplay.com.
+  Recorded, not done: lazy-preloading the 4 font weights not used above the fold (LCP already 1.5 s), and about
+  55 KiB of unused JS (scripts at 163 KB of 200 KB).
+- `brand-copy-reviewer`: FAIL. Blocker: "does not execute real trades" was read on fxreplay.com in Stage 1 but
+  never recorded in A-003; added with source, plus "prices in USD" for the JSON-LD currency. Majors fixed: the
+  risk disclosure is now linked; JSON-LD `url` is fxreplay.com, not this site; the success state says the
+  account does not sign the user in to the FX Replay app (A-004); removed "You can change this later" and
+  "You can add these details later", which the UI couldn't honour. Minors fixed: missing `bg-tertiary` theme
+  mapping (the progress track had no color), card hover border uses `border-brand`, ADR-005 row extended to
+  card borders, OG colors resolved from semantic tokens, source comments cite recorded paraphrases, a stacked
+  negation and an aphorism in the copy rewritten.
+- `qa-a11y-tester`: FAIL. Majors fixed: reduced motion didn't stop the `view()` timeline animation (a
+  time-based duration has no effect on a scroll timeline; now gated by `prefers-reduced-motion: no-preference`,
+  with an E2E test); Back on step 2 discarded the chosen markets, and Claude's own test hid it by checking a
+  different box afterwards (now saved on Back, and the test asserts Futures stays checked). Minors fixed: Back
+  from step 3 keeps the typed email; reduced motion also zeroes animation delays; the progress bar and step
+  heading disappear after success; step 1 error marks the `radiogroup` invalid and clears on change (ESLint
+  rejected `aria-invalid` on a radio, correctly). Recorded: inline footer and notice links are below 44 px
+  (WCAG 2.5.8 inline exception, ADR-010).
+
+**Validation after fixes:** `pnpm e2e` 42 of 42, two consecutive runs; `pnpm test` 34 of 34; `pnpm check:config`
+25 of 25; `pnpm lint` 0 issues; `pnpm typecheck` clean. `pnpm lhci`: `/` 1, 1, 1, LCP 1535 ms, CLS 0, TBT 18 ms,
+HTML 6,711 B, scripts 163,301 B; `/variants/quiz` 0.99, 1, 1, LCP 1558 ms, CLS 0, TBT 13 ms, HTML 7,032 B,
+scripts 165,458 B.

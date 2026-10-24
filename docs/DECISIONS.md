@@ -111,7 +111,7 @@ existing primitive instead, never a new color:
 | Kit token | Problem (measured) | UI uses |
 | --- | --- | --- |
 | `text-brand` (`blue-600`) for body text and links | 4.02:1 on `bg-primary` | `blue-400` (7.00:1); `blue-600` only for fills, large text and borders |
-| `border-primary` to `border-tertiary` for input boundaries | 1.19 to 1.81:1 | `btn-border-outline` (`dark-200`, 3.81:1) for form controls |
+| `border-primary` to `border-tertiary` for input boundaries | 1.19 to 1.81:1 | `btn-border-outline` (`dark-200`, 3.81:1) for form controls, and for card, FAQ and footer borders so every boundary on the page reads the same; card hover uses `border-brand` |
 | `border-error` | 2.46:1 | Error state shown by text and icon as well as the border; the border uses `text-error` (`#F8D7DA`, 15.44:1 on `bg-primary`) |
 | Focus outline (no kit token) | n/a | `blue-400` (7.00:1 on `bg-primary`), the same primitive as links |
 | `banner-color-paragraph` on warning and success banners | 2.67 and 2.36:1 | Dark text on those banners, or the light variants, chosen when a banner is built |
