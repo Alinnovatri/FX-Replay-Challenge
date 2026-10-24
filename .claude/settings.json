@@ -1,8 +1,6 @@
 {
   "$schema": "https://json.schemastore.org/claude-code-settings.json",
-  "enabledMcpjsonServers": [
-    "playwright"
-  ],
+  "enabledMcpjsonServers": ["playwright"],
   "permissions": {
     "allow": [
       "Bash(node scripts/brand/generate-tokens.mjs:*)",
@@ -25,11 +23,16 @@
       "mcp__c338174a-e0b4-4e64-9fd3-9cd7c56b0020__get_deployment",
       "mcp__c338174a-e0b4-4e64-9fd3-9cd7c56b0020__list_deployment_events",
       "mcp__c338174a-e0b4-4e64-9fd3-9cd7c56b0020__get_runtime_errors",
-      "mcp__c338174a-e0b4-4e64-9fd3-9cd7c56b0020__get_runtime_logs"
+      "mcp__c338174a-e0b4-4e64-9fd3-9cd7c56b0020__get_runtime_logs",
+      "Bash(corepack pnpm lint:*)",
+      "Bash(corepack pnpm typecheck:*)",
+      "Bash(corepack pnpm test:*)",
+      "Bash(corepack pnpm e2e:*)",
+      "Bash(corepack pnpm build:*)",
+      "Bash(corepack pnpm lhci:*)",
+      "Bash(corepack pnpm check:config:*)"
     ],
-    "ask": [
-      "mcp__41e0c87a-ded5-49f9-a886-d474d85842e3__exec"
-    ],
+    "ask": ["mcp__41e0c87a-ded5-49f9-a886-d474d85842e3__exec"],
     "deny": [
       "Read(./.env)",
       "Read(./.env.local)",
@@ -91,6 +94,17 @@
           {
             "type": "command",
             "command": "node \"$CLAUDE_PROJECT_DIR/.claude/hooks/env-guard.mjs\""
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"$CLAUDE_PROJECT_DIR/.claude/hooks/format-lint.mjs\""
           }
         ]
       }
