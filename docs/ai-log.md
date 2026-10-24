@@ -32,5 +32,10 @@ fxreplay.com, writing the token generator, contrast report and planning docs.
 - Contrast ratios cross-checked against WCAG reference values (white on black 21.00; `#777777` on white 4.48).
 - Facts in ASSUMPTIONS A-003 were read from the cited pages in the built-in browser.
 
-**Time:** about 45 min against a 25 min budget. The overrun came from resolving the FX Replay questions on
-the public site, which the owner asked for and which moves part of the Stage 1 research forward.
+- Claude reported "about 20 min" and then "about 45 min" for this stage without measuring either: both were
+  guesses, against working rule 5. The owner asked how they were obtained. Measured from timestamps instead
+  (below); from Stage 1 on, each stage logs `date` at its first and last command.
+
+**Time (measured):** at most 24 min, against a 25 min budget. Lower bound of the start: the brief commit
+`5e7556e` at 00:13:23 (UTC-6), which the kickoff prompt depends on. End: PR #1 created at 00:37:27. The
+window includes the owner's reply time, so working time is lower.
