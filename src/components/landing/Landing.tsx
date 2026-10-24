@@ -185,13 +185,9 @@ export function Landing({ signup }: { signup: ReactNode }) {
                 <p className="text-text-secondary">{item.body}</p>
                 {item.id === 'journal' && 'alt' in item ? (
                   <div className="mt-auto overflow-hidden rounded-xl border border-input-border">
-                    <Image
-                      src={journalShot}
-                      alt={item.alt}
-                      sizes="(min-width: 768px) 720px, 100vw"
-                      className="h-auto w-full"
-                      loading="lazy"
-                    />
+                    <div className="crop-journal">
+                      <Image src={journalShot} alt={item.alt} sizes="(min-width: 768px) 1030px, 143vw" loading="lazy" />
+                    </div>
                     <p className="border-t border-input-border px-3 py-2 text-xs text-text-secondary">Sample data</p>
                   </div>
                 ) : null}

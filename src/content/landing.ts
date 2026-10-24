@@ -29,7 +29,7 @@ export const showcase = {
 };
 
 export const benefits = {
-  title: 'Practise the whole loop, not just the chart',
+  title: 'Replay, journal and review in one loop',
   intro:
     'Replay, journal and prop firm rules live in one product, so every session ends with something you can review.',
   items: [
@@ -45,7 +45,7 @@ export const benefits = {
       // A-003: FXR Journal; the journal compares the plan with what happened, privately
       body: 'Entries, exits, notes, tags and outcomes stay tied to each session, so you can compare the plan with what actually happened.',
       // brand/screenshots/backtest.webp (sample data on fxreplay.com)
-      alt: 'FX Replay journal table of trades next to an analytics panel, showing sample data',
+      alt: 'FX Replay journal: a table of sample trades with session, entry date, asset, side, return and tag columns',
     },
     {
       id: 'prop',
@@ -63,19 +63,21 @@ export const benefits = {
       id: 'script',
       title: 'Turn a setup into an indicator',
       // A-003: FXR Script, optional
-      body: 'FXR Script turns a tested setup into your own indicator. Optional: no coding needed to backtest.',
+      body: "FXR Script turns a tested setup into your own indicator. You don't need to code to backtest; FXR Script is optional.",
     },
   ],
 };
 
 export const plan = {
-  title: 'From signup to your first replay',
+  // How replay works in the product (A-003 rows on Replay mode); not what signing up on this page gives (A-004).
+  title: 'How replay works in FX Replay',
   steps: [
-    { title: 'Create your free account', body: 'Your name and email. The free plan needs no credit card.' },
+    { title: 'Pick a market and a date', body: 'Choose one of 120+ assets and jump to the day you want to practise.' },
     {
-      title: 'Pick a market and a date',
-      body: 'Choose an asset, jump to a day and press play.',
-      alt: 'FX Replay replay controls: speed and play buttons',
+      title: 'Turn on replay',
+      body: 'Go back to any date in your session and watch price unfold as it happened.',
+      // brand/screenshots/replay.webp shows this settings card
+      alt: 'FX Replay setting to enable replay, which lets you go back to any date after the session start date',
     },
     { title: 'Trade it and review it', body: 'Place trades as price unfolds, then check entries, exits and outcomes.' },
   ],
@@ -93,7 +95,7 @@ export const audience = {
     {
       who: 'If you are refining a strategy',
       q: 'Is the strategy failing, or is execution drifting?',
-      a: 'Compare the plan with what actually happened across sessions, privately, without relying on memory.',
+      a: 'Compare the plan with what actually happened in each session. Your journal is private.',
     },
     {
       who: 'If you are preparing for a prop firm challenge',
@@ -119,7 +121,7 @@ export const faq = {
     {
       q: 'Which markets can I practise?',
       // A-003: markets listed in the fxreplay.com FAQ
-      a: 'Futures, forex, indices, metals, energy, stocks, crypto and agricultural markets, with real historical data.',
+      a: 'Markets include futures, forex, indices, metals, energy, stocks, crypto and agricultural markets, all with real historical data.',
     },
     {
       q: 'What happens when I sign up on this page?',
@@ -131,7 +133,8 @@ export const faq = {
 
 export const finalCta = {
   title: 'Your next idea deserves a real test',
-  body: 'Start on the free plan and replay it on real historical data.',
+  // A-004: this signup is for this project; the claim about FX Replay's free plan is sourced (A-003).
+  body: "Create a free account for this project. FX Replay's own free plan needs no credit card.",
 };
 
 export const footer = {

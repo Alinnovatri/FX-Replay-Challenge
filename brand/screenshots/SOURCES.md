@@ -15,5 +15,5 @@ re-encodes them at request time. Replace them by downloading again from the same
 
 Downloaded but not kept, after review: `journal.webp` (washed-out grey on the dark page), `propfirm.webp` ("Challenge
 Passed!" with a 10 % profit target, which reads as a result claim) and `mentorai.webp` (white background and a sample
-"win rate of 60 %"). `backtest.webp` shows sample analytics figures; the page labels it as sample data and makes no
-performance claim about it.
+"win rate of 60 %"). `backtest.webp` includes an analytics panel with sample profit and win-rate figures; the page crops that
+panel at display time (`.crop-journal`) and shows only the journal table, labelled as sample data.

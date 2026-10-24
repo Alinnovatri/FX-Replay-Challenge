@@ -12,7 +12,7 @@ const TOTAL_STEPS = 3;
 const LEVELS: Record<(typeof EXPERIENCE_LEVELS)[number], { label: string; hint: string }> = {
   beginner: { label: 'Beginner', hint: 'Learning how markets move' },
   intermediate: { label: 'Intermediate', hint: 'Trading a strategy, refining it' },
-  advanced: { label: 'Advanced', hint: 'Stress-testing a proven process' },
+  advanced: { label: 'Advanced', hint: 'Stress-testing an established process' },
 };
 const MARKET_LABELS: Record<(typeof MARKETS)[number], string> = {
   forex: 'Forex',

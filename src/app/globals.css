@@ -175,7 +175,7 @@ input[aria-invalid='true'] {
   align-items: center;
   justify-content: center;
   border-radius: 12px;
-  color: var(--color-blue-400);
+  color: var(--color-link);
   background: color-mix(in srgb, var(--btn-bg-primary-active) 14%, transparent);
 }
 .step-number {
@@ -183,7 +183,7 @@ input[aria-invalid='true'] {
   font-size: 2rem;
   font-weight: 900;
   line-height: 1;
-  color: var(--color-blue-400);
+  color: var(--color-link);
 }
 .quote-card {
   background: linear-gradient(180deg, var(--bg-secondary), var(--bg-primary));
@@ -204,4 +204,16 @@ input[aria-invalid='true'] {
   );
   z-index: -1;
   pointer-events: none;
+}
+
+/* Shows only the journal table of backtest.webp: the analytics panel on its right (sample win rate and
+   profit figures) is cropped at display time; the source file stays unmodified. */
+.crop-journal {
+  aspect-ratio: 985 / 602;
+  overflow: hidden;
+}
+.crop-journal img {
+  width: 143%;
+  max-width: none;
+  height: auto;
 }
