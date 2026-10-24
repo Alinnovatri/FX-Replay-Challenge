@@ -32,25 +32,10 @@ Checked on 2026-10-24 against all 9 pages. No contradictions. Notes:
 | Architecture diagram | Optional | 2 |
 | Full authentication | Not required | 2 |
 
-## Analytics taxonomy (draft; finalised in Stage 6)
+## Analytics taxonomy
 
-Event names are `object_action` in snake case. Every event carries `is_test`, `variant` (once the
-experiment exists), `path` and the first-touch `utm_source`, `utm_medium` and `utm_campaign`. No email, name
-or free text, ever.
-
-| Event | Trigger | Captured | Key properties |
-| --- | --- | --- | --- |
-| `landing_viewed` | Landing renders | Relay | `referrer_domain` |
-| `cta_clicked` | Any "Try FX Replay Free" CTA | Relay | `cta_id` (from a typed enum) |
-| `signup_started` | First interaction with the signup form | Relay | none |
-| `signup_submitted` | Valid form submitted | Relay | none |
-| `signup_failed` | API returns an error or times out | Relay | `error_code` |
-| `user_signed_up` | `POST /users` commits a new user | Server | `user_id` (opaque) |
-| `profile_completed` | Self-service `PATCH /users/:id` succeeds | Server | `fields_count` |
-
-**Primary metric:** signup conversion rate, defined once in `docs/ANALYTICS.md` (Stage 6) as unique
-visitors with `user_signed_up` divided by unique visitors with `landing_viewed`, excluding `is_test`. Other
-documents link to that definition instead of restating it.
+Superseded by [ANALYTICS.md](ANALYTICS.md), which holds the event taxonomy and the single
+[primary-metric definition](ANALYTICS.md#primary-metric). This plan links to it instead of restating it.
 
 ## Time budget
 

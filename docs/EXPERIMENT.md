@@ -21,7 +21,7 @@ no data either way, so it is tested.
 | Everything else | Identical landing page | Identical landing page |
 
 **Assignment:** `src/proxy.ts`, server-side, 50/50 per visitor on the first visit to `/`, kept in the
-`fxr_variant` cookie for 90 days. The quiz is served at `/` through a rewrite: same URL, no client flash, no
+`__Host-fxr_variant` cookie for 90 days (`?fxr_variant=` overrides it on previews and locally only). The quiz is served at `/` through a rewrite: same URL, no client flash, no
 layout shift. Every event carries `variant`.
 
 ## Metrics
@@ -73,5 +73,5 @@ Read at the planned sample, on `is_test = false` traffic only, after checking th
 - PostHog: an insight "Signup funnel by variant" built from the funnel in ANALYTICS, `is_test = false`,
   breakdown `variant`.
 - A change to either arm during the run restarts the count.
-- The experiment flag is the `fxr_variant` cookie; to end the test, change `assignVariant` to return the winner
+- The experiment flag is the `__Host-fxr_variant` cookie; to end the test, change `assignVariant` to return the winner
   and keep the losing component until the next cleanup.

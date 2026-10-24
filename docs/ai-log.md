@@ -414,3 +414,28 @@ E2E tests for events and assignment, ANALYTICS.md and EXPERIMENT.md with the sam
 `pnpm check:config` 25 of 25. `pnpm lhci` (both pages, mobile, devtools, 3 runs): `/` 1, 1, 1, LCP 1540 ms,
 CLS 0, TBT 17 ms, HTML 7,048 B, scripts 163,631 B; `/variants/quiz` 0.99, 1, 1, LCP 1559 ms, TBT 17 ms, HTML
 7,363 B, scripts 165,857 B. Lighthouse visits `/` without cookies, so the proxy may assign either arm.
+
+**Reviews: both FAIL, all findings fixed.**
+
+- `security-reviewer`. Major: `?fxr_test=1` let anyone tag real visitors as test traffic with a shared link,
+  hiding their conversions from the funnel. Query overrides (`fxr_test`, `fxr_variant`) now work outside
+  production only; scripts use the `x-fxr-test` header, which a cross-site page can't send without a preflight.
+  Minors fixed: the relay rejects a foreign `Origin` (403); cookies use the `__Host-` prefix; E2E and Lighthouse
+  use `ANALYTICS_SINK=log` so their events never reach PostHog (the comment claiming the fake key kept events
+  local was wrong); `POSTHOG_PROJECT_KEY` documented in `.env.example`. Noted for Stage 7: rate limiting and
+  signed visitor ids.
+- `analytics-auditor`. Majors fixed: `referrer_domain` came from the relay request's `Referer`, so it was always
+  the site's own host; it is now the hostname of `document.referrer`, sent by the page and validated by the
+  contract. The docs claimed the user id is never the `distinct_id`, but it is the fallback without a visitor
+  cookie; server events now carry `has_visitor_id` and the metric excludes those conversions. PLAN restated the
+  metric definition and had already drifted; it now links to ANALYTICS. Minors fixed: the definition names its
+  computation (the same ordered 1-day funnel EXPERIMENT reads); `quiz_step_completed` fires once per step; the
+  `example.test` rule is documented as tagging `user_signed_up` only; Lighthouse sends the test header; unit
+  tests assert no conversion on 400 and `IDEMPOTENCY_CONFLICT`; the analytics catch can't throw on a non-Error.
+- Claude's own slip during the fixes: a global rename to `__Host-` cookie names also renamed the query
+  parameters (`?fxr_variant`, `?fxr_test`) in the proxy and one test; caught on reading the file back, and the
+  proxy was rewritten.
+
+**Validation after fixes:** `pnpm test` 46 of 46; `pnpm e2e` 48 of 48, two consecutive runs; `pnpm lint` 0
+issues. `pnpm lhci`: `/` 0.99, 1, 1, LCP 1560 ms, CLS 0, TBT 16 ms, HTML 7,187 B, scripts 163,694 B;
+`/variants/quiz` 0.99, 1, 1, LCP 1557 ms, CLS 0, TBT 17 ms, HTML 7,505 B, scripts 165,956 B.
