@@ -10,6 +10,11 @@ export type ApiResult<T> =
   | { ok: false; kind: 'timeout' }
   | { ok: false; kind: 'network' };
 
+function isUserResponse<T>(json: unknown): json is T {
+  const user = (json as { user?: { id?: unknown } } | null)?.user;
+  return typeof user?.id === 'string';
+}
+
 async function send<T>(
   path: string,
   method: string,
@@ -32,8 +37,9 @@ async function send<T>(
       signal: controller.signal,
     });
     const json = (await res.json().catch(() => null)) as (T & Partial<ApiError>) | null;
-    if (res.ok && json) return { ok: true, data: json };
-    if (json?.error) return { ok: false, kind: 'http', status: res.status, error: json.error };
+    // A 2xx without the expected shape (an edge or proxy page, an empty body) is not a success.
+    if (res.ok && isUserResponse(json)) return { ok: true, data: json as T };
+    if (!res.ok && json?.error) return { ok: false, kind: 'http', status: res.status, error: json.error };
     return { ok: false, kind: 'http', status: res.status, error: { code: 'INTERNAL', message: '', requestId: '' } };
   } catch {
     return timedOut ? { ok: false, kind: 'timeout' } : { ok: false, kind: 'network' };
