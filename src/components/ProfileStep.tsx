@@ -21,7 +21,7 @@ const MARKET_LABELS: Record<(typeof MARKETS)[number], string> = {
 };
 
 /** Optional step after signup. The conversion is already counted; this only enriches the profile. */
-export function ProfileStep({ userId }: { userId: string }) {
+export function ProfileStep({ userId, only }: { userId: string; only?: 'firstName' }) {
   const ids = { name: useId(), level: useId(), markets: useId() };
   const [status, setStatus] = useState<Status>('editing');
   const [error, setError] = useState<string | null>(null);
@@ -84,7 +84,11 @@ export function ProfileStep({ userId }: { userId: string }) {
   const busy = status === 'saving';
   return (
     <form onSubmit={save} noValidate className="flex flex-col gap-4">
-      <p className="text-text-secondary">Tell us how you trade, or skip this step. Everything here is optional.</p>
+      <p className="text-text-secondary">
+        {only === 'firstName'
+          ? 'What should we call you? This is optional.'
+          : 'Tell us how you trade, or skip this step. Everything here is optional.'}
+      </p>
       <div className="flex flex-col gap-2">
         <label htmlFor={ids.name} className="font-bold">
           First name <span className="font-normal text-text-secondary">(optional)</span>
@@ -97,34 +101,38 @@ export function ProfileStep({ userId }: { userId: string }) {
           className="min-h-12 rounded-lg border border-input-border bg-bg-secondary px-4 text-base focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
         />
       </div>
-      <fieldset className="flex flex-col gap-2">
-        <legend className="mb-2 font-bold">Experience level</legend>
-        <div className="flex flex-wrap gap-2">
-          {EXPERIENCE_LEVELS.map((level) => (
-            <label
-              key={level}
-              className="flex min-h-11 cursor-pointer items-center gap-2 rounded-full border border-input-border px-4"
-            >
-              <input type="radio" className="accent-link" name="experienceLevel" value={level} />
-              {LEVEL_LABELS[level]}
-            </label>
-          ))}
-        </div>
-      </fieldset>
-      <fieldset className="flex flex-col gap-2">
-        <legend className="mb-2 font-bold">Markets you want to practise</legend>
-        <div className="flex flex-wrap gap-2">
-          {MARKETS.map((market) => (
-            <label
-              key={market}
-              className="flex min-h-11 cursor-pointer items-center gap-2 rounded-full border border-input-border px-4"
-            >
-              <input type="checkbox" className="accent-link" name="markets" value={market} />
-              {MARKET_LABELS[market]}
-            </label>
-          ))}
-        </div>
-      </fieldset>
+      {only === 'firstName' ? null : (
+        <>
+          <fieldset className="flex flex-col gap-2">
+            <legend className="mb-2 font-bold">Experience level</legend>
+            <div className="flex flex-wrap gap-2">
+              {EXPERIENCE_LEVELS.map((level) => (
+                <label
+                  key={level}
+                  className="flex min-h-11 cursor-pointer items-center gap-2 rounded-full border border-input-border px-4"
+                >
+                  <input type="radio" className="accent-link" name="experienceLevel" value={level} />
+                  {LEVEL_LABELS[level]}
+                </label>
+              ))}
+            </div>
+          </fieldset>
+          <fieldset className="flex flex-col gap-2">
+            <legend className="mb-2 font-bold">Markets you want to practise</legend>
+            <div className="flex flex-wrap gap-2">
+              {MARKETS.map((market) => (
+                <label
+                  key={market}
+                  className="flex min-h-11 cursor-pointer items-center gap-2 rounded-full border border-input-border px-4"
+                >
+                  <input type="checkbox" className="accent-link" name="markets" value={market} />
+                  {MARKET_LABELS[market]}
+                </label>
+              ))}
+            </div>
+          </fieldset>
+        </>
+      )}
       <div aria-live="polite" className="min-h-6 text-sm text-error-text">
         {error ? (
           <>
