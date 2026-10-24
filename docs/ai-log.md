@@ -480,3 +480,25 @@ retries are user-triggered in `SignupForm.tsx`, not in `api.ts`; `drizzle-kit pu
 not guarded in code; reviewers with Bash are instructed, not prevented, from writing; "TBT under 20 ms" was false
 for Stage 4 (21 ms); the Twitter tags are emitted but not asserted; the quiz A/B is an owner decision on Claude's
 proposal, not an owner correction; `vercel env ls` was blocked by the classifier, not withdrawn by Claude.
+
+## Stage 5b: Landing redesign (2026-10-24)
+
+**Start:** 05:44:45 (UTC-6), entirely in overrun of the 6-hour budget (owner decision, see Stage 8).
+
+**Owner requests:** a less basic landing built from fxreplay.com research without copying it; name and email on
+the same signup screen; a fixed `/variants/control` URL next to `/variants/quiz`.
+
+**Delegated:** copy drafts from the vendored skills; reviews by `brand-copy-reviewer`, `code-reviewer` and
+`qa-a11y-tester`.
+
+**Review: `brand-copy-reviewer`: FAIL, fixed.** The journal screenshot showed a sample "Winrate 67.13%" and
+profit figures (now cropped at display time); the `replay.webp` alt text described replay controls, but the
+image is the "Enable replay" settings card; "From signup to your first replay" implied this signup gives replay
+access, against A-004 (now "How replay works in FX Replay", and the final CTA says the account is for this
+project); one contrast-reveal title and three minor AI tells; two icons used a primitive instead of
+`--color-link`; the footer's risk paraphrase gained its A-003 source row.
+
+**Review: `code-reviewer`: FAIL, fixed.** EXPERIMENT, DECISIONS (ADR-004, ADR-011), A-010, ARCHITECTURE and
+ANALYTICS still described the old flow; ADR-013 records the redesign. Two untested behaviours now have e2e
+cases (a name change after a timeout gets a new Idempotency-Key; the quiz keeps the name across Back), the
+screenshot test asserts lazy loading, and a server error on `firstName` no longer shows as an email error.

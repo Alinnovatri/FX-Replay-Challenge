@@ -41,6 +41,7 @@ Facts we may use in copy, all read on 2026-10-24:
 | The prop firm simulator checks whether sizing, drawdown control and execution hold under challenge rules | [fxreplay.com](https://fxreplay.com/) "Does your risk process hold when pressure rises?", read 2026-10-24 |
 | Testing across conditions and a real sample, so confidence comes from data rather than a few good days | [fxreplay.com](https://fxreplay.com/) "Is your edge real, or a lucky streak?", read 2026-10-24 |
 | Also listed: multi-chart (charting powered by TradingView), economic calendar, Monte Carlo simulation, seconds timeframes | [fxreplay.com](https://fxreplay.com/) "Explore all of our features", read 2026-10-24 |
+| Trading involves a high level of risk; past performance of any strategy or backtest does not guarantee future results | Risk and educational disclosure in the [fxreplay.com](https://fxreplay.com/) footer, read 2026-10-24 |
 | Not a broker; does not execute real trades or facilitate live trading; does not handle client funds | Risk and educational disclosure in the [fxreplay.com](https://fxreplay.com/) footer, read 2026-10-24 |
 | Prices on the pricing page are in USD | [Pricing](https://fxreplay.com/pricing), read 2026-10-24 |
 | Not a broker; educational and backtesting platform only | [fxreplay.com footer disclosure](https://fxreplay.com/) |
@@ -116,7 +117,8 @@ Amended 2026-10-24 by the owner, replacing the earlier "72 hours from the first 
 ## A-010
 
 **Status:** open (refined in Stage 4 with the signup skill).
-The optional profile step asks for a first name, an experience level (beginner, intermediate, advanced) and the
-markets the trader practises. The market list is the subset of FX Replay's markets in A-003 that a beginner
+Signup asks for an optional first name next to the email (both arms, ADR-013). The experience level (beginner,
+intermediate, advanced) and the markets the trader practises come from the quiz, or from the optional profile
+step in the control. The market list is the subset of FX Replay's markets in A-003 that a beginner
 would recognise (forex, futures, stocks, crypto, indices, metals); energy and agricultural markets are left out to
 keep the step short. These fields are our choice for a meaningful `PATCH`, not FX Replay's onboarding.

@@ -16,12 +16,13 @@ no data either way, so it is tested.
 | | Control | Variant |
 | --- | --- | --- |
 | Name | `control` | `quiz` |
-| Signup | Email field and "Try FX Replay Free" in the hero | Step 1 experience level, step 2 markets (optional), step 3 email, with "Step n of 3" and a progress bar |
-| After signup | Optional profile step (name, level, markets) | Optional first name (level and markets already saved) |
+| Signup | Optional first name, email and "Try FX Replay Free" in the hero | Step 1 experience level, step 2 markets (optional), step 3 optional first name and email, with "Step n of 3" and a progress bar |
+| After signup | Optional profile step (level, markets) | Nothing (level and markets already saved) |
 | Everything else | Identical landing page | Identical landing page |
 
 **Assignment:** `src/proxy.ts`, server-side, 50/50 per visitor on the first visit to `/`, kept in the
-`__Host-fxr_variant` cookie for 90 days (`?fxr_variant=` overrides it on previews and locally only). The quiz is served at `/` through a rewrite: same URL, no client flash, no
+`__Host-fxr_variant` cookie for 90 days (`?fxr_variant=` overrides it on previews and locally only; `/variants/quiz` and `/variants/control` pin
+the arm for QA, in production too). The quiz is served at `/` through a rewrite: same URL, no client flash, no
 layout shift. Every event carries `variant`.
 
 ## Metrics
@@ -33,8 +34,7 @@ layout shift. Every event carries `variant`.
   - Time from `landing_viewed` to `user_signed_up` (median): a large increase is a usability warning even if
     conversion holds.
   - Core Web Vitals (Lighthouse CI on both pages, field data later): the variant must stay within the budgets.
-  - `profile_completed` per `user_signed_up`: compared only within an arm, because the arms ask different
-    profile questions after signup.
+  - `profile_completed` per `user_signed_up`: control only, because the quiz arm has no step after signup.
 - **Diagnostic (variant):** drop-off between `signup_started`, `quiz_step_completed` 1 and 2, and
   `signup_submitted`.
 

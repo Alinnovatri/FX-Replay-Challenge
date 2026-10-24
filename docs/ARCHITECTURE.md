@@ -36,7 +36,7 @@ flowchart TB
 
 | Path | Responsibility |
 | --- | --- |
-| `src/app/page.tsx`, `src/app/variants/quiz/page.tsx` | The two experiment arms; both statically prerendered |
+| `src/app/page.tsx`, `src/app/variants/quiz/page.tsx`, `src/app/variants/control/page.tsx` | `/` serves the assigned arm; the two fixed QA URLs pin one arm each. All statically prerendered |
 | `src/components/landing/` | Landing sections, page-view and CTA tracking |
 | `src/components/SignupForm.tsx`, `QuizSignup.tsx`, `ProfileStep.tsx` | Signup states, quiz steps, optional profile |
 | `src/contracts/` | Zod schemas shared by browser and server: users and analytics events |
