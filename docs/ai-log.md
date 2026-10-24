@@ -283,3 +283,19 @@ TBT 21 ms, HTML 3,473 B, scripts 156,971 B. Ports 3200 and 3300 free afterwards.
 
 **Validation after fixes:** `pnpm test` 33 of 33; `pnpm e2e` 22 of 22; `pnpm typecheck` clean; `pnpm lint`
 0 issues.
+
+- `qa-a11y-tester`: PASS (axe 0 in every state at 360 and 1440 px, tested by hand with its own server) with 8
+  minors. Fixed: "Try again" unmounted the focused button and dropped focus to `<body>` (now focus moves to the
+  submit button first); the busy state is announced through `role="status"`; the error is no longer both
+  focused and in a live region (read twice); focus targets show a ring; the mobile project runs at 360 px; E2E
+  now asserts focus on errors and success, runs axe in timeout and network states, tabs for real in the
+  keyboard test, and covers network failure and the empty email. Recorded instead: inline legal links below
+  44 px (WCAG 2.5.8 exception). Not covered by E2E, verified by hand by the agent: profile 500 and 401, skip
+  while saving.
+- Flakiness Claude introduced and caught: the new network test failed 1 run in 3 because focus was moved in
+  `requestAnimationFrame`, racing React's commit; moved to `useEffect`, then 3 of 3 full runs passed. A unit
+  test (pagination) also failed once because back-to-back inserts can share `created_at`; it now inserts
+  explicit timestamps. markdownlint started linting Playwright's report folder; reports are now ignored.
+
+**Validation (final):** `pnpm e2e` 26 of 26, three consecutive runs; `pnpm test` 33 of 33, three consecutive
+runs; `pnpm lint` 0 issues; `pnpm typecheck` clean. Ports 3200 free.

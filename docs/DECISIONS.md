@@ -227,4 +227,10 @@ symlink to `docs/PRODUCT_CONTEXT.md`, so there is one context document.
 - The conversion stays server-side (`user_signed_up` in `POST /users`); the browser sends no analytics yet
   (Stage 6).
 - E2E runs against the production build with a freshly migrated PGlite folder and fake test secrets.
-  `localhost` is a secure context, so the `__Host-` cookie works over http in tests.
+  `localhost` is a secure context, so the `__Host-` cookie works over http in tests. The mobile project runs at
+  360 px, the smallest width the brief requires.
+- Focus is moved in `useEffect` after React commits the new state (an earlier `requestAnimationFrame` version
+  was flaky). "Try again" moves focus to the submit button before it unmounts, and a visually hidden
+  `role="status"` announces "Creating your account…".
+- Target size: every control is at least 44 px tall. The Terms and Privacy links are inline in a sentence and
+  stay at text height, which WCAG 2.5.8 allows; this is a recorded exception to the project's 44 px rule.
