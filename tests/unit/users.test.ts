@@ -1,0 +1,217 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { closeDbs, freshDb } from '../helpers/db';
+import { GET, POST } from '@/app/users/route';
+import { PATCH } from '@/app/users/[id]/route';
+import { setSinkForTests, type ServerEvent } from '@/server/analytics';
+import { PROFILE_COOKIE, signProfileToken } from '@/server/auth';
+import { setDbForTests, type Db } from '@/db/client';
+
+const BASE = 'https://app.test';
+const ADMIN = { authorization: 'Bearer test-admin-token' };
+const events: ServerEvent[] = [];
+
+function post(body: unknown, headers: Record<string, string> = {}) {
+  return POST(
+    new Request(`${BASE}/users`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', ...headers },
+      body: typeof body === 'string' ? body : JSON.stringify(body),
+    }),
+  );
+}
+
+function patch(id: string, body: unknown, headers: Record<string, string> = {}) {
+  return PATCH(
+    new Request(`${BASE}/users/${id}`, {
+      method: 'PATCH',
+      headers: { 'content-type': 'application/json', ...headers },
+      body: JSON.stringify(body),
+    }),
+    { params: Promise.resolve({ id }) },
+  );
+}
+
+const list = (query = '', headers: Record<string, string> = ADMIN) =>
+  GET(new Request(`${BASE}/users${query}`, { headers }));
+
+/** Turns a Set-Cookie header into the Cookie header a browser would send back. */
+const cookieFrom = (res: Response) => ({ cookie: (res.headers.get('set-cookie') ?? '').split(';')[0] ?? '' });
+
+async function signUp(email = 'trader@example.test') {
+  const res = await post({ email });
+  const { user } = (await res.json()) as { user: { id: string } };
+  return { res, user, cookie: cookieFrom(res) };
+}
+
+beforeEach(async () => {
+  await freshDb();
+  events.length = 0;
+  setSinkForTests(async (event) => {
+    events.push(event);
+  });
+});
+afterEach(async () => {
+  vi.restoreAllMocks();
+  await closeDbs();
+});
+
+describe('POST /users', () => {
+  it('creates a user, sets the self-service cookie and tracks the conversion once', async () => {
+    const res = await post({ email: '  Trader@Example.TEST ' });
+    expect(res.status).toBe(201);
+    const { user } = await res.json();
+    expect(user).toMatchObject({ email: 'trader@example.test', firstName: null, markets: null });
+    const cookie = res.headers.get('set-cookie') ?? '';
+    expect(cookie).toMatch(new RegExp(`^${PROFILE_COOKIE}=`));
+    for (const attribute of ['HttpOnly', 'Secure', 'SameSite=Strict', 'Path=/', 'Max-Age=1800']) {
+      expect(cookie).toContain(attribute);
+    }
+    expect(events).toEqual([{ name: 'user_signed_up', userId: user.id }]);
+  });
+
+  it('returns 409 EMAIL_TAKEN for a duplicate, case-insensitively, without a second event', async () => {
+    await post({ email: 'dup@example.test' });
+    const res = await post({ email: 'DUP@example.test' });
+    expect(res.status).toBe(409);
+    expect((await res.json()).error).toMatchObject({ code: 'EMAIL_TAKEN', requestId: expect.any(String) });
+    expect(events).toHaveLength(1);
+  });
+
+  it('returns 400 with per-field messages for invalid input and unknown fields', async () => {
+    const res = await post({ email: 'not-an-email', name: 'x' });
+    expect(res.status).toBe(400);
+    const { error } = await res.json();
+    expect(error.code).toBe('VALIDATION_FAILED');
+    expect(error.fields).toMatchObject({ email: expect.any(String), name: 'Unknown field' });
+  });
+
+  it('returns 400 for malformed JSON and a missing content type', async () => {
+    expect((await post('{nope')).status).toBe(400);
+    const noType = await POST(new Request(`${BASE}/users`, { method: 'POST', body: '{}' }));
+    expect(noType.status).toBe(400);
+  });
+
+  it('replays the original 201 for a retry with the same Idempotency-Key and body', async () => {
+    const key = crypto.randomUUID();
+    const first = await post({ email: 'retry@example.test' }, { 'idempotency-key': key });
+    const second = await post({ email: 'retry@example.test' }, { 'idempotency-key': key });
+    expect(second.status).toBe(201);
+    expect(second.headers.get('idempotent-replayed')).toBe('true');
+    expect((await second.json()).user.id).toBe((await first.json()).user.id);
+    expect(events).toHaveLength(1);
+  });
+
+  it('returns 409 IDEMPOTENCY_CONFLICT when a key is reused with a different body', async () => {
+    const key = crypto.randomUUID();
+    await post({ email: 'a@example.test' }, { 'idempotency-key': key });
+    const res = await post({ email: 'b@example.test' }, { 'idempotency-key': key });
+    expect(res.status).toBe(409);
+    expect((await res.json()).error.code).toBe('IDEMPOTENCY_CONFLICT');
+  });
+
+  it('returns 500 with a generic message and logs only the error class and SQLSTATE', async () => {
+    const failing = {
+      insert: () => ({
+        values: () => ({
+          returning: () =>
+            Promise.reject(Object.assign(new Error('insert into users trader@example.test'), { code: '08006' })),
+        }),
+      }),
+    };
+    setDbForTests(failing as unknown as Db);
+    const log = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const res = await post({ email: 'trader@example.test' });
+    expect(res.status).toBe(500);
+    expect((await res.json()).error.code).toBe('INTERNAL');
+    const line = String(log.mock.calls[0]?.[0]);
+    expect(JSON.parse(line)).toMatchObject({ event: 'request_failed', errorClass: 'Error', sqlstate: '08006' });
+    expect(line).not.toContain('example.test');
+    expect(events).toHaveLength(0);
+  });
+});
+
+describe('GET /users', () => {
+  it('requires the admin token', async () => {
+    expect((await list('', {})).status).toBe(401);
+    expect((await list('', { authorization: 'Bearer wrong' })).status).toBe(401);
+  });
+
+  it('pages newest first with a stable cursor', async () => {
+    for (const n of [1, 2, 3]) await post({ email: `u${n}@example.test` });
+    const first = await (await list('?limit=2')).json();
+    expect(first.users.map((u: { email: string }) => u.email)).toEqual(['u3@example.test', 'u2@example.test']);
+    const second = await (await list(`?limit=2&cursor=${first.nextCursor}`)).json();
+    expect(second.users.map((u: { email: string }) => u.email)).toEqual(['u1@example.test']);
+    expect(second.nextCursor).toBeNull();
+  });
+
+  it('rejects an out-of-range limit and a bad cursor', async () => {
+    expect((await list('?limit=101')).status).toBe(400);
+    expect((await list('?cursor=garbage')).status).toBe(400);
+  });
+});
+
+describe('PATCH /users/:id', () => {
+  it('lets the self-service cookie update profile fields and tracks profile_completed', async () => {
+    const { user, cookie } = await signUp();
+    const res = await patch(
+      user.id,
+      { firstName: 'Ana', experienceLevel: 'beginner', markets: ['forex', 'crypto'] },
+      cookie,
+    );
+    expect(res.status).toBe(200);
+    expect((await res.json()).user).toMatchObject({
+      firstName: 'Ana',
+      experienceLevel: 'beginner',
+      markets: ['forex', 'crypto'],
+    });
+    expect(events.at(-1)).toEqual({ name: 'profile_completed', userId: user.id, fieldsCount: 3 });
+  });
+
+  it('forbids the cookie from changing email or another user', async () => {
+    const { user, cookie } = await signUp('one@example.test');
+    const other = await signUp('two@example.test');
+    expect((await patch(user.id, { email: 'x@example.test' }, cookie)).status).toBe(403);
+    expect((await patch(other.user.id, { firstName: 'Eve' }, cookie)).status).toBe(403);
+  });
+
+  it('rejects a missing, tampered or expired cookie with 401', async () => {
+    const { user, cookie } = await signUp();
+    expect((await patch(user.id, { firstName: 'Ana' })).status).toBe(401);
+    expect((await patch(user.id, { firstName: 'Ana' }, { cookie: `${cookie.cookie}x` })).status).toBe(401);
+    const expired = signProfileToken(user.id, Date.now() - 31 * 60 * 1000);
+    expect((await patch(user.id, { firstName: 'Ana' }, { cookie: `${PROFILE_COOKIE}=${expired}` })).status).toBe(401);
+  });
+
+  it('lets the admin change email, with 409 on a taken email and 404 for an unknown id', async () => {
+    const { user } = await signUp('old@example.test');
+    await signUp('taken@example.test');
+    const res = await patch(user.id, { email: 'New@Example.test' }, ADMIN);
+    expect(res.status).toBe(200);
+    expect((await res.json()).user.email).toBe('new@example.test');
+    expect((await patch(user.id, { email: 'taken@example.test' }, ADMIN)).status).toBe(409);
+    expect((await patch(crypto.randomUUID(), { firstName: 'Ana' }, ADMIN)).status).toBe(404);
+    expect((await patch('not-a-uuid', { firstName: 'Ana' }, ADMIN)).status).toBe(404);
+  });
+
+  it('rejects invalid values and an empty body with 400', async () => {
+    const { user, cookie } = await signUp();
+    expect((await patch(user.id, { experienceLevel: 'expert' }, cookie)).status).toBe(400);
+    expect((await patch(user.id, { markets: ['options'] }, cookie)).status).toBe(400);
+    expect((await patch(user.id, {}, cookie)).status).toBe(400);
+  });
+});
+
+describe('configuration', () => {
+  it('fails loudly with a 500 when ADMIN_TOKEN is missing, naming the setting in the log only', async () => {
+    vi.stubEnv('ADMIN_TOKEN', '');
+    const log = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const res = await list();
+    expect(res.status).toBe(500);
+    expect(JSON.parse(String(log.mock.calls[0]?.[0]))).toMatchObject({
+      errorClass: 'ConfigError',
+      setting: 'ADMIN_TOKEN',
+    });
+    vi.unstubAllEnvs();
+  });
+});

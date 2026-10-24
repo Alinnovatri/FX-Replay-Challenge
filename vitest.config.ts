@@ -11,6 +11,12 @@ export default defineConfig({
   test: {
     include: ['tests/**/*.test.ts'],
     // Same values in CI and locally: tests always use an in-memory PGlite.
-    env: { DB_DRIVER: 'pglite', PGLITE_DIR: 'memory://' },
+    // Test-only values; production secrets live in Vercel and never in the repo.
+    env: {
+      DB_DRIVER: 'pglite',
+      PGLITE_DIR: 'memory://',
+      ADMIN_TOKEN: 'test-admin-token',
+      SESSION_SECRET: 'test-session-secret',
+    },
   },
 });
