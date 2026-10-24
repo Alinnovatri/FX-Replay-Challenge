@@ -5,6 +5,8 @@ import { createUserSchema } from '@/contracts/users';
 import { createUser, type ApiResult, type SignupAnswers } from '@/lib/api';
 import type { User } from '@/contracts/users';
 import { ProfileStep } from './ProfileStep';
+import { track } from '@/lib/track';
+import type { SIGNUP_ERROR_CODES } from '@/contracts/events';
 
 type Status = 'idle' | 'submitting' | 'error' | 'success';
 
@@ -15,6 +17,13 @@ const COPY = {
   timeout: "This is taking longer than usual. Trying again won't create a second account.",
   failed: "We couldn't create your account. Please try again.",
 };
+
+function errorCode(result: Exclude<ApiResult<unknown>, { ok: true }>): (typeof SIGNUP_ERROR_CODES)[number] {
+  if (result.kind === 'timeout') return 'TIMEOUT';
+  if (result.kind === 'network') return 'NETWORK';
+  const code = result.error.code;
+  return code === 'VALIDATION_FAILED' || code === 'EMAIL_TAKEN' || code === 'IDEMPOTENCY_CONFLICT' ? code : 'INTERNAL';
+}
 
 function validate(value: string): string | null {
   if (!value.trim()) return COPY.required;
@@ -61,6 +70,7 @@ export function SignupForm({
   const [status, setStatus] = useState<Status>('idle');
   const [user, setUser] = useState<User | null>(null);
   const inFlight = useRef(false);
+  const started = useRef(Boolean(answers));
   // One key per signup attempt: a retry after a timeout replays the same request instead of creating twice.
   const attempt = useRef<{ fingerprint: string; key: string } | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -83,6 +93,7 @@ export function SignupForm({
       inputRef.current?.focus();
       return;
     }
+    track('signup_submitted', {});
     const normalised = email.trim().toLowerCase();
     const fingerprint = JSON.stringify({ email: normalised, answers });
     if (attempt.current?.fingerprint !== fingerprint) attempt.current = { fingerprint, key: crypto.randomUUID() };
@@ -102,6 +113,7 @@ export function SignupForm({
       setFocusTarget('success');
       return;
     }
+    track('signup_failed', { error_code: errorCode(result) });
     const message = messageFor(result);
     if (message.resetKey) attempt.current = null;
     setStatus('error');
@@ -152,6 +164,11 @@ export function SignupForm({
         spellCheck={false}
         placeholder="you@example.com"
         value={email}
+        onFocus={() => {
+          if (started.current) return;
+          started.current = true;
+          track('signup_started', {});
+        }}
         onChange={(e) => {
           setEmail(e.target.value);
           onEmailChange?.(e.target.value);

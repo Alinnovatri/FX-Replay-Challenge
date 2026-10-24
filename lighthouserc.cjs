@@ -6,7 +6,7 @@ module.exports = {
       startServerReadyPattern: 'Ready',
       url: ['http://127.0.0.1:3300/', 'http://127.0.0.1:3300/variants/quiz'],
       numberOfRuns: 3,
-      settings: { throttlingMethod: 'devtools' }, // default mobile form factor: the stricter profile
+      settings: { throttlingMethod: 'devtools', extraHeaders: JSON.stringify({ 'x-fxr-test': '1' }) }, // default mobile form factor: the stricter profile
     },
     assert: {
       aggregationMethod: 'median',
