@@ -324,6 +324,7 @@ describe('configuration', () => {
       errorClass: 'ConfigError',
       setting: 'SESSION_SECRET',
     });
+    expect(captured).toHaveLength(0);
     vi.unstubAllEnvs();
     // The account was not created: the same email signs up normally once the secret is back.
     expect((await post({ email: 'nosecret@example.test' })).status).toBe(201);

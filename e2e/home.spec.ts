@@ -143,14 +143,15 @@ test('pages and the API send the security headers', async ({ request }) => {
   }
 });
 
-test('the page runs under the CSP without violations', async ({ page }) => {
+test('every arm runs under the CSP without violations', async ({ page }) => {
   const violations: string[] = [];
   page.on('console', (msg) => {
     if (msg.type() === 'error' && /Content Security Policy/i.test(msg.text())) violations.push(msg.text());
   });
-  await page.goto('/');
-  await page.getByLabel('Email').fill('csp@example.test');
-  await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
-  for (const img of await page.locator('main img').all()) await img.scrollIntoViewIfNeeded();
+  for (const path of ['/', '/variants/quiz', '/variants/control']) {
+    await page.goto(path);
+    await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+    for (const img of await page.locator('main img').all()) await img.scrollIntoViewIfNeeded();
+  }
   expect(violations).toEqual([]);
 });
