@@ -57,8 +57,9 @@ documents link to that definition instead of restating it.
 Total 360 min, counted as wall-clock time from the first commit (owner, 2026-10-24); time before Stage 0
 (writing the brief) is included. The clock runs continuously, pauses included (owner, 2026-10-24), so the
 budget ends at **2026-10-24 05:27:55 (UTC-6)**. Owner review, merges and restarts consume the same clock.
-Re-planned at the end of Stage 0 (owner, 2026-10-24): about 70 min were used before Stage 1, so Stages 1 to 9
-get 240 min of work and 44 min stay as buffer for owner reviews, merges and restarts. Scope cuts: four
+Re-planned at the end of Stage 0 (owner, 2026-10-24): Stage 1 started at 00:45:41, 78 min after the first
+commit, leaving 282 min. Stages 1 to 9 get 240 min of work and 42 min stay as buffer for owner reviews, merges
+and restarts. Scope cuts: four
 vendored public skills instead of seven (ab-testing, frontend-design and web-design-guidelines deferred, see
 ADR-008), no experiment feature flag, less visual polish. A stage that runs 50% over its budget stops and proposes cuts.
 

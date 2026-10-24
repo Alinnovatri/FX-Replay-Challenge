@@ -103,9 +103,13 @@ are added in Stage 2, once CI exists. This matches the one-PR-per-stage flow and
 | Vercel | claude.ai connector (owner's account) | Deployment status, build and runtime logs | Named read tools allowed; env-var changes and reads, promote, rollback and rolling releases denied; everything else asks |
 | PostHog | claude.ai connector (owner's account) | Verify that events arrive (Stage 6) | Its single `exec` tool reads and writes, so it can't be split by name: it always asks |
 
-The Supabase connector is disabled (owner, 2026-10-24). Merges to `main` are denied twice: `gh pr merge` is
-denied in settings and branch protection requires a PR. Production schema changes outside migrate-on-deploy
-are denied (`drizzle-kit push`), and there is no database MCP.
+The Supabase connector is disabled (owner, 2026-10-24). Deny rules in settings match command prefixes, so
+they are a best-effort layer: they cover `gh pr merge`, the common `git push` forms that target `main`,
+`drizzle-kit push` (direct, `npx` and `pnpm exec`) and production deploys from the Vercel CLI. The real
+controls are branch protection on `main` (a PR is required, also for admins) and the absence of production
+credentials in the session: migrations reach Neon only through migrate-on-deploy, and there is no database MCP.
+Secret files are guarded by the `env-guard` hook, which blocks any path segment starting with `.env` other
+than `.env.example`, plus explicit Read deny rules.
 
 **Risk:** the PostHog connector authenticates as a project admin. Every call needs the owner's approval; a
 scoped personal API key is the production next step. The connectors are not in the repo, so a reviewer who

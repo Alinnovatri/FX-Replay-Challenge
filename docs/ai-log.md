@@ -74,3 +74,29 @@ vendored skills instead of seven.
 - env-guard checked by hand on 7 inputs: `.env`, `.env.local` and `.env.production` blocked (exit 2);
   `.env.example`, `environment.ts` and `git status` allowed.
 - Vendored references/ files were scanned for API calls and keys, not read in full; SKILL.md files were read in full.
+
+**After the restart (00:58):** the project agents, the eight skills and the `playwright` project MCP server
+loaded; Vercel and PostHog connectors connected; Supabase disabled. The owner saw no trust prompt for
+`playwright` because `enabledMcpjsonServers` pre-approves it. `product-marketing` drafted
+`docs/PRODUCT_CONTEXT.md` from fxreplay.com, pricing and signup, and the token cross-check went into A-008.
+
+**Project agents used for the first time, both FAIL, both acted on:**
+
+- `brand-copy-reviewer`: 1 blocker (a fact without a URL), 1 major (StoryBrand plan implied the journal is in
+  the free plan, unsupported), 9 minor (testimonial quotes in a file drafting skills read, unlabelled
+  inferences, wrong rule numbers). All fixed.
+- `code-reviewer`: 1 blocker. The first env-guard regex let `cat .env*`, `.envrc`, `.env-local`,
+  `.env.example.bak`, Glob and Grep globs through, and the hook failed open when the project path held a space
+  or a symlink. Claude's own tests had missed all of it because they never ran the hook as a process. Fixed by
+  matching path segments instead of the following character, comparing real paths at the entrypoint, and adding
+  process-level tests (including a symlinked dir and a path with a space). Also fixed: the validator skipped a
+  vendored skill that lost its SOURCE.md and missed `NotebookEdit` and `mcp__my_server`; deny rules gained the
+  missing `git push`, `drizzle-kit` and `vercel --prod` forms; PLAN budget arithmetic corrected (282 min left at
+  the Stage 1 start, not 284). The owner approved the settings changes before they were made, since a subagent
+  can't authorise permission edits.
+- The hardened hook immediately blocked Claude's own settings edit and this log entry, whose shell commands named
+  `.env` files; both were redone without a shell command (a script file, and the Edit tool). Accepted false
+  positive: any shell command text that mentions `.env`.
+
+**Validation:** `node --test scripts/validate-claude-config.test.mjs scripts/brand/brand.test.mjs`: 20 of 20
+pass. `node scripts/validate-claude-config.mjs`: valid.
