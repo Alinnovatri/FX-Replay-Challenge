@@ -1,5 +1,6 @@
 import { adminUpdateSchema } from '@/contracts/users';
 import { track } from '@/server/analytics';
+import { eventContext } from '@/server/context';
 import { isAdmin, PROFILE_COOKIE, readCookie, verifyProfileToken } from '@/server/auth';
 import { HttpError, handle, json, parseOr400, readJson } from '@/server/http';
 import { updateUser } from '@/server/users';
@@ -33,7 +34,11 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
       throw new HttpError(400, 'VALIDATION_FAILED', 'Send at least one field to update');
 
     const user = await updateUser(id, changes);
-    if (!admin) await track({ name: 'profile_completed', userId: id, fieldsCount: Object.keys(changes).length });
+    if (!admin)
+      await track(
+        { name: 'profile_completed', userId: id, fieldsCount: Object.keys(changes).length },
+        eventContext(request, id),
+      );
     return json({ user }, 200);
   });
 }

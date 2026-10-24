@@ -1,5 +1,6 @@
 import { createUserSchema, listUsersQuerySchema } from '@/contracts/users';
 import { track } from '@/server/analytics';
+import { eventContext } from '@/server/context';
 import { profileCookie, requireAdmin } from '@/server/auth';
 import { HttpError, handle, json, logError, parseOr400, readJson } from '@/server/http';
 import { createUser, findIdempotent, listUsers, rememberIdempotent, requestHash } from '@/server/users';
@@ -71,7 +72,7 @@ export async function POST(request: Request): Promise<Response> {
         logError('idempotency_store_failed', error, requestId);
       }
     }
-    await track({ name: 'user_signed_up', userId: user.id });
+    await track({ name: 'user_signed_up', userId: user.id }, eventContext(request, user.id, input.email));
     return json({ user }, 201, { 'set-cookie': profileCookie(user.id), location: `/users/${user.id}` });
   });
 }
