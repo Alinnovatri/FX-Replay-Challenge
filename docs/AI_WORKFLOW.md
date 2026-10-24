@@ -16,7 +16,8 @@ skills".
 
 ## Agents (`.claude/agents/`)
 
-Six reviewers with minimal tools (none can edit files) and one fixed output format: `Verdict: PASS | FAIL` plus a
+Six reviewers with minimal tools (none has Edit or Write; the three that have Bash are instructed to stay
+read-only) and one fixed output format: `Verdict: PASS | FAIL` plus a
 table of severity, location, rule, finding and fix.
 
 | Agent | Scope | Used in stages |
@@ -84,12 +85,15 @@ checks are green; Claude verifies production with the MCP servers and logs the e
 
 - **Owner corrections:** time estimates reported without measuring them (replaced by `date` timestamps); Node 24
   proposed when the machine already ran 22; the 6-hour budget recounted as wall-clock from the first commit; the
-  landing "felt basic" (accepted; the redesign is a documented next step); the quiz-first signup proposed as a
-  test instead of a replacement (owner chose the A/B).
+  landing "felt basic" (accepted; the redesign is recorded in the Stage 5 entry of `ai-log.md` as the next step).
+- **Owner decisions on Claude's proposals:** the quiz-first signup became an A/B test (Claude proposed testing
+  it rather than replacing email-first; the owner accepted).
 - **Claude rejected or narrowed its own changes:** a `noindex` on the variant that would have de-indexed `/`;
-  a second `bash` command that included `vercel env ls` (blocked by the classifier, rerun without it); a global
+  a global
   rename that also renamed query parameters; skills' advice that conflicted with owner decisions (a password at
   signup).
+- **Blocked by the guardrails:** a shell command that included `vercel env ls` was blocked by the auto-mode
+  classifier (listing env vars is a denied category); nothing was read, and the HTTP probes were rerun alone.
 - **Subagents can't authorise permission changes:** every settings or hook change suggested by an agent was
   surfaced to the owner and applied only after approval.
 

@@ -12,7 +12,7 @@ flowchart TB
     L["Landing (static HTML)\ncontrol: email-first\nquiz: questions first"]
     T["track() 1 KB\nfetch keepalive"]
   end
-  subgraph Vercel["Vercel (iad1)"]
+  subgraph Vercel["Vercel (iad1, from the deployment record)"]
     P["proxy.ts\nvisitor id, 50/50 variant,\ntest tag, rewrite / to quiz"]
     S["Static pages + assets\n(CDN)"]
     U["/users route handlers\nPOST, PATCH, GET"]
@@ -71,7 +71,8 @@ flowchart TB
 - Uniform error shape `{ error: { code, message, requestId, fields? } }`, statuses 400, 401, 403, 404, 409, 500.
 - Idempotency-Key on signup, reused by the client across retries, replayed for 30 minutes.
 - The browser never holds a secret: the admin token is server-only; the profile cookie is HttpOnly.
-- Client timeouts (10 s) and retries are explicit in `src/lib/api.ts`; double submits are blocked.
+- Client timeout (10 s) in `src/lib/api.ts`; user-triggered retries in `SignupForm.tsx` reuse the
+  Idempotency-Key (a new key after `IDEMPOTENCY_CONFLICT`); double submits are blocked.
 
 ## Deployment architecture
 
@@ -89,7 +90,7 @@ flowchart TB
 
 | Area | Today | Notes |
 | --- | --- | --- |
-| Hosting | Vercel Hobby, functions in `iad1`; Neon Free in `us-east` | Free tiers ($0) |
+| Hosting | Vercel Hobby, functions in `iad1` (Vercel API deployment record); Neon Free, region chosen at setup (Washington, D.C.; not verified inside Neon) | Free tiers ($0) |
 | DNS | `*.vercel.app` | A custom domain would add `__Host-` cookie benefits and HSTS preload on the apex |
 | CDN and edge | Vercel CDN for static assets; pages prerendered | `/` passes through `proxy.ts` and is `private, no-store` |
 | Caching | Static HTML and hashed assets; API responses `no-store` | Edge-cached variant pages per arm are a next step |
@@ -106,4 +107,4 @@ flowchart TB
   experiments; replace the cookie flag with PostHog experiments once traffic justifies it.
 - Alerting on signup error rates and health, Sentry for client errors, error budgets per endpoint.
 - A custom domain, multi-region reads, preview databases migrated per branch.
-- Localisation (the site serves several languages) and consent management for regions that need it.
+- Localisation and consent management for the regions FX Replay serves (TODO(owner): which languages and regions).

@@ -461,6 +461,22 @@ and is reported as such in the stage reports.
 code, the ADRs and this log; README links to every deliverable.
 
 **Validation:** production headers and timing measured with `curl` for PERFORMANCE and SECURITY (HSTS present,
-no CSP or other security headers, `/` 6,383 B compressed, TTFB 0.25 s, CDN `HIT` on static assets); every number
-in PERFORMANCE comes from the Stage 6 Lighthouse run above or earlier entries in this log; one claim in
-AI_WORKFLOW (the Neon branch limit) is marked as inferred, as it was never confirmed inside Neon.
+no CSP or other security headers, `/` 6,383 B compressed, TTFB 0.25 s, CDN `HIT` on static assets); one claim
+in AI_WORKFLOW (the Neon branch limit) is marked as inferred, as it was never confirmed inside Neon.
+
+**Review: `code-reviewer` (docs against code): FAIL, fixed.** Claude's first version of this entry claimed every
+number in PERFORMANCE came from the log; several did not. Evidence now recorded here:
+
+- `curl -sI` on production `/`: `strict-transport-security: max-age=63072000; includeSubDomains; preload`;
+  `x-vercel-cache: PRERENDER` on the first request (05:27) and `HIT` on a later one (05:31).
+- Stage 6 Lighthouse reports (`.lighthouseci/lhr-*.json`, 6 runs, read with a script): third-party bytes 0 on
+  every run; font transfer 112,660 B; unused-JavaScript savings 53,502 to 55,653 B; legacy-JavaScript savings
+  13,726 B; LCP element `div.mx-auto > div.flex > h1.font-heading` on all 6 runs.
+- Vercel API deployment record (`get_deployment`): `regions: ["iad1"]`. The Neon region was chosen at setup
+  (Washington, D.C.) and is not verified inside Neon.
+
+Other fixes: "the site serves several languages" was an unsourced fact about FX Replay (now `TODO(owner)`);
+retries are user-triggered in `SignupForm.tsx`, not in `api.ts`; `drizzle-kit push` is only denied to the agent,
+not guarded in code; reviewers with Bash are instructed, not prevented, from writing; "TBT under 20 ms" was false
+for Stage 4 (21 ms); the Twitter tags are emitted but not asserted; the quiz A/B is an owner decision on Claude's
+proposal, not an owner correction; `vercel env ls` was blocked by the classifier, not withdrawn by Claude.

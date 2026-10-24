@@ -24,8 +24,9 @@ measurement; nothing is aspirational unless it is under "Not done".
 - **Analytics:** a closed event contract; same-origin relay (a foreign `Origin` is a 403); no PII in events
   (verified in PostHog: 0 of 5 events contained an `@`); query overrides that could tag or reassign visitors
   work outside production only.
-- **Database:** migrations reach production only through migrate-on-deploy; `drizzle-kit push` and the Neon
-  migrator are refused elsewhere.
+- **Database:** migrations reach production only through migrate-on-deploy: the Neon migrator refuses to run
+  outside a Vercel production build (`scripts/migrate.mjs`), and `drizzle-kit push` is denied to the agent by
+  the settings deny rules (there is no guard in `drizzle.config.ts`).
 - **Transport:** Vercel serves HSTS (`max-age=63072000; includeSubDomains; preload`, measured on production).
 - **Supply chain:** exact dependency versions, pinned pnpm (sha512), Actions pinned to SHAs, CodeQL,
   `pnpm audit --prod` (0 known vulnerabilities after moving off `next@16.4.0`), Dependabot with a cooldown.
