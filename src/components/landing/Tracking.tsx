@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, type ReactNode } from 'react';
-import type { CTA_IDS } from '@/contracts/events';
+import { referrerDomainSchema, type CTA_IDS } from '@/contracts/events';
 import { track } from '@/lib/track';
 
 /** Sends landing_viewed once per page load. */
@@ -13,8 +13,9 @@ export function PageView() {
     } catch {
       referrer = null;
     }
-    // Internal navigations are not attribution.
-    track('landing_viewed', { referrer_domain: referrer === location.hostname ? null : referrer });
+    // Internal navigations are not attribution; a host the contract rejects (IPv6, underscores) becomes null.
+    if (referrer === location.hostname || !referrerDomainSchema.safeParse(referrer).success) referrer = null;
+    track('landing_viewed', { referrer_domain: referrer });
   }, []);
   return null;
 }
