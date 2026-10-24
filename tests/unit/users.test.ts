@@ -183,7 +183,11 @@ describe('GET /users', () => {
   });
 
   it('pages newest first with a stable cursor', async () => {
-    for (const n of [1, 2, 3]) await post({ email: `u${n}@example.test` });
+    // Explicit, distinct timestamps: back-to-back inserts can share created_at, and ties order by id.
+    await client.query(`insert into users (email, created_at) values
+      ('u1@example.test', '2026-10-24 08:00:01+00'),
+      ('u2@example.test', '2026-10-24 08:00:02+00'),
+      ('u3@example.test', '2026-10-24 08:00:03+00')`);
     const first = await (await list('?limit=2')).json();
     expect(first.users.map((u: { email: string }) => u.email)).toEqual(['u3@example.test', 'u2@example.test']);
     const second = await (await list(`?limit=2&cursor=${first.nextCursor}`)).json();
