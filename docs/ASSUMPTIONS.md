@@ -100,3 +100,11 @@ Amended 2026-10-24 by the owner, replacing the earlier "72 hours from the first 
   owner's, UTC-6. Submission deadline: **2026-10-25 09:19 (UTC-6)**.
 - **6-hour work budget:** counted from the first commit, `8888643` at 2026-10-23 23:27:55 (UTC-6).
   The clock runs continuously, pauses included, so the budget ends at 2026-10-24 05:27:55 (UTC-6).
+
+## A-010
+
+**Status:** open (refined in Stage 4 with the signup skill).
+The optional profile step asks for a first name, an experience level (beginner, intermediate, advanced) and the
+markets the trader practises. The market list is the subset of FX Replay's markets in A-003 that a beginner
+would recognise (forex, futures, stocks, crypto, indices, metals); energy and agricultural markets are left out to
+keep the step short. These fields are our choice for a meaningful `PATCH`, not FX Replay's onboarding.
