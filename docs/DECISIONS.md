@@ -31,7 +31,11 @@ The shell's system Node (23.7.0, an odd, unsupported release) is never used.
 
 ## ADR-003: Analytics through a first-party relay
 
-**Status:** proposed (detailed in Stage 6).
+**Status:** accepted (2026-10-24, Stage 6). Implemented as `POST /api/e` plus `src/server/analytics.ts`; the
+taxonomy, funnel and data-quality rules are in [ANALYTICS.md](ANALYTICS.md). Amendments: the server calls
+PostHog's capture endpoint with `fetch` (2 s timeout) instead of `posthog-node`, so there is no new dependency;
+the browser uses `fetch` with `keepalive` instead of `sendBeacon`, because a JSON request keeps the relay's
+content-type check and is observable in E2E tests; experiment assignment is server-side in `src/proxy.ts`.
 No PostHog script in the page. The browser sends typed events to a same-origin Route Handler, which
 validates them with the shared Zod schema and forwards them with `posthog-node`. The conversion event is
 captured on the server inside `POST /users`, after the insert commits, so it can't fire on a click or a

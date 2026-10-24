@@ -375,3 +375,42 @@ HTML 6,993 B, scripts 165,249 B. Ports 3200 and 3300 free afterwards.
 25 of 25; `pnpm lint` 0 issues; `pnpm typecheck` clean. `pnpm lhci`: `/` 1, 1, 1, LCP 1535 ms, CLS 0, TBT 18 ms,
 HTML 6,711 B, scripts 163,301 B; `/variants/quiz` 0.99, 1, 1, LCP 1558 ms, CLS 0, TBT 13 ms, HTML 7,032 B,
 scripts 165,458 B.
+
+**After the review fixes:** the owner merged PR #18 at 03:56 (UTC-6). Production check at 04:50: `pnpm smoke`
+OK; `/variants/quiz`, `/robots.txt`, `/sitemap.xml`, `/icon.svg` and `/opengraph-image` all 200.
+
+**Owner feedback (04:2x): the landing felt basic in content and look and feel.** Claude agreed, audited
+fxreplay.com again with the Playwright MCP (sections not used yet: Mentor AI, FXR Script, the "is your edge real"
+questions, Monte Carlo, multichart; 6 real product screenshots on FX Replay's CDN, 10 to 121 KB each) and
+proposed a redesign (bento benefits, feature tabs with screenshots, who-it's-for, trust strip; CSS-only, no
+shadcn because Radix would add client JavaScript). It did not fit: 60 min were left on the 6-hour clock and P0
+deliverables (analytics, experiment, docs) were still open, and the brief's cut order puts visual polish first.
+The owner chose to do Stages 6 and 8 first and approved downloading the 6 screenshots for the redesign later.
+
+**End:** 04:50:53, from `date`: 90 min against a 55 min budget (the owner's redesign request and review time
+are inside that window).
+
+## Stage 6: Analytics and experiment (2026-10-24)
+
+**Start:** 04:50:53 (UTC-6). **Owner decision:** do Stages 6 and 8 in full even though the 6-hour budget
+(ending 05:27:55) is exceeded; document the overrun. The overrun is tracked from 05:27:55 onwards.
+
+**Delegated:** the event contract, relay, PostHog sink, proxy assignment, browser tracker, 9 unit tests and 6
+E2E tests for events and assignment, ANALYTICS.md and EXPERIMENT.md with the sample-size table.
+
+**Corrections and judgement calls:**
+
+- First tracker used `sendBeacon` with a JSON Blob; Playwright can't read beacon bodies, so the E2E couldn't
+  verify what was sent. Switched to `fetch` with `keepalive`, which survives navigation the same way.
+- Random assignment at `/` would have made the control E2E tests land on the quiz half the time. Playwright now
+  starts with a `fxr_variant=control` cookie, and a separate test checks first-visit assignment and stickiness.
+- The relay rejects events without a visitor id (400) instead of inventing one, so relay events always join the
+  funnel; the conversion falls back to the user id when the cookie is missing.
+- Visiting `/variants/quiz` directly moves the visitor to the quiz arm (for QA); recorded as a known limit.
+- Sample sizes computed with `python3 -c` and `statistics.NormalDist`: 8,155 per arm at 5 % baseline and +20 %
+  relative MDE; 31,231 at +10 %; 13,911 at 3 %; 4,917 at 8 %.
+
+**Validation:** `pnpm test` 44 of 44; `pnpm e2e` 48 of 48, two consecutive runs; `pnpm lint` 0 issues;
+`pnpm check:config` 25 of 25. `pnpm lhci` (both pages, mobile, devtools, 3 runs): `/` 1, 1, 1, LCP 1540 ms,
+CLS 0, TBT 17 ms, HTML 7,048 B, scripts 163,631 B; `/variants/quiz` 0.99, 1, 1, LCP 1559 ms, TBT 17 ms, HTML
+7,363 B, scripts 165,857 B. Lighthouse visits `/` without cookies, so the proxy may assign either arm.
