@@ -24,7 +24,7 @@
     "check:config": "node scripts/validate-claude-config.mjs && node scripts/brand/generate-tokens.mjs --check && node scripts/brand/contrast.mjs --check && node scripts/brand/sync-assets.mjs --check && node --test scripts/brand/brand.test.mjs scripts/validate-claude-config.test.mjs scripts/vercel-build.test.mjs"
   },
   "dependencies": {
-    "@electric-sql/pglite": "0.5.8",
+    "@electric-sql/pglite": "0.5.11",
     "@fontsource/lato": "5.3.0",
     "@fontsource/nunito-sans": "5.3.0",
     "@neondatabase/serverless": "1.2.0",
